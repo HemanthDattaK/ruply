@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply antialiased;
+  }
+}
+
+@layer components {
+  /* Primary Button Component */
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white bg-primary-500 border border-transparent rounded-lg shadow-button hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 active:scale-[0.98] transition-all duration-200 ease-in-out;
+  }
+  
+  .btn-primary:hover {
+    @apply shadow-card-hover transform -translate-y-0.5;
+  }
+  
+  /* Secondary Button Component */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-6 py-3 text-base font-medium text-primary-500 bg-transparent border border-primary-500 rounded-lg hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 active:scale-[0.98] transition-all duration-200 ease-in-out;
+  }
+  
+  /* Dark mode secondary button */
+  .dark .btn-secondary {
+    @apply text-primary-400 border-primary-400 hover:bg-primary-500/10;
+  }
+  
+  /* Debt Card Component */
+  .debt-card {
+    @apply bg-card-light dark:bg-card-dark rounded-xl p-6 shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300 ease-in-out cursor-pointer border border-gray-100 dark:border-gray-700;
+  }
+  
+  /* Dashboard Animation Classes */
+  .dashboard-card {
+    @apply opacity-0 translate-y-2.5;
+    animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  
+  .dashboard-card:nth-child(1) { animation-delay: 0ms; }
+  .dashboard-card:nth-child(2) { animation-delay: 50ms; }
+  .dashboard-card:nth-child(3) { animation-delay: 100ms; }
+  .dashboard-card:nth-child(4) { animation-delay: 150ms; }
+  .dashboard-card:nth-child(5) { animation-delay: 200ms; }
+  .dashboard-card:nth-child(6) { animation-delay: 250ms; }
+  
+  /* Progress Bar Component */
+  .progress-bar {
+    @apply w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden;
+  }
+  
+  .progress-fill {
+    @apply h-full bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full transition-all duration-1000 ease-out;
+  }
+  
+  /* Modal Animations */
+  .modal-overlay {
+    @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50;
+    animation: fadeIn 0.3s ease-out;
+  }
+  
+  .modal-content {
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full;
+    animation: scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  /* Skeleton Loader */
+  .skeleton {
+    @apply animate-pulse bg-gray-200 dark:bg-gray-700 rounded;
+  }
+  
+  /* Number Counter Animation */
+  .counter {
+    @apply inline-block;
+    animation: countUp 1s ease-out;
+  }
+  
+  /* Confetti Animation */
+  .confetti {
+    @apply absolute pointer-events-none;
+    animation: confetti 2s ease-out forwards;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-gray-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-gray-500;
+}
