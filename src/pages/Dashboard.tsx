@@ -3,7 +3,7 @@ import { Plus, Users, DollarSign } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import CustomerCard from '../components/CustomerCard';
-import { Button } from '../components/ui/Button';
+import Button from '../components/ui/Button';
 
 interface Customer {
   id: string;
