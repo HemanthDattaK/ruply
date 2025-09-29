@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 interface AppContextType {
   customers: Customer[];
   transactions: Transaction[];
-  addCustomer: (name: string) => Promise<void>;
+  addCustomer: (name: string, phone?: string) => Promise<void>;
   addTransaction: (customerId: string, amount: number, items: string, type: 'debt' | 'payment') => Promise<void>;
   deleteTransaction: (transactionId: string, customerId: string, amount: number, type: 'debt' | 'payment') => Promise<void>;
   deleteAllTransactions: (customerId: string) => Promise<void>;
@@ -82,7 +82,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const addCustomer = async (name: string) => {
+  const addCustomer = async (name: string, phone?: string) => {
     try {
       // Ensure we're authenticated before adding
       const { data: { session } } = await supabase.auth.getSession();
@@ -93,7 +93,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       const { data, error } = await supabase
         .from('customers')
-        .insert([{ name, total_debt: 0 }])
+        .insert([{ name, phone, total_debt: 0 }])
         .select()
         .single();
 

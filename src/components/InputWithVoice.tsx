@@ -65,12 +65,12 @@ const InputWithVoice: React.FC<InputWithVoiceProps> = ({
     }
   };
 
-  const baseInputClasses = `w-full px-4 py-3 pr-12 bg-card-light dark:bg-card-dark border border-gray-300 dark:border-gray-600 rounded-lg text-text-primary-light dark:text-text-primary-dark placeholder-text-secondary-light dark:placeholder-text-secondary-dark focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors resize-none`;
+  const baseInputClasses = `w-full px-4 py-3 pr-12 bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none`;
 
   return (
     <div className="mb-6">
-      <label htmlFor={id} className="block text-sm font-medium text-text-primary-light dark:text-text-primary-dark mb-2">
-        {label} {required && <span className="text-error-light dark:text-error-dark">*</span>}
+      <label htmlFor={id} className="block text-sm font-medium text-white mb-2">
+        {label} {required && <span className="text-red-400">*</span>}
       </label>
       <div className="relative">
         {multiline ? (
@@ -81,7 +81,7 @@ const InputWithVoice: React.FC<InputWithVoiceProps> = ({
             placeholder={placeholder}
             required={required}
             className={baseInputClasses}
-            rows={4}
+            rows={3}
           />
         ) : (
           <input
@@ -102,8 +102,8 @@ const InputWithVoice: React.FC<InputWithVoiceProps> = ({
           whileTap={{ scale: 0.95 }}
           className={`absolute right-3 top-1/2 transform -translate-y-1/2 p-2 rounded-full transition-colors ${
             isListening
-              ? 'text-primary-500 bg-primary-100 dark:bg-primary-500/20'
-              : 'text-text-secondary-light dark:text-text-secondary-dark hover:text-primary-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ? 'text-blue-400 bg-blue-500/20'
+              : 'text-gray-400 hover:text-blue-400 hover:bg-white/10'
           }`}
           aria-label="Use voice input"
         >
