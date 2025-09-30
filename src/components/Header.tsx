@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Settings } from 'lucide-react';
+import { ArrowLeft, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface HeaderProps {
@@ -29,14 +29,15 @@ const Header: React.FC<HeaderProps> = ({ title, showBack = false }) => {
               <ArrowLeft size={24} className="text-gray-900" />
             </motion.button>
           ) : (
-            <div className="p-2 bg-gradient-to-br from-[#0F172A] to-[#1E293B] rounded-lg mr-3">
-              <BookOpen className="w-6 h-6 text-white" />
+            <div className="mr-3">
+              <h1 className="text-lg font-bold text-gray-900">Sai Sri Kirana</h1>
             </div>
           )}
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">{title}</h1>
-            {!showBack && <p className="text-sm text-gray-500">Ruply</p>}
-          </div>
+          {showBack && (
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">{title}</h1>
+            </div>
+          )}
         </div>
         {!showBack && (
           <motion.button

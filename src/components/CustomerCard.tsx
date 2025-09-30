@@ -32,7 +32,7 @@ export default function CustomerCard({ customer }: CustomerCardProps) {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Customer Statement - ${customer.name}</title>
+          <title>Bill - Sai Sri Kirana</title>
           <style>
             body { font-family: Arial, sans-serif; margin: 20px; }
             .header { text-align: center; margin-bottom: 30px; }
@@ -42,14 +42,13 @@ export default function CustomerCard({ customer }: CustomerCardProps) {
         </head>
         <body>
           <div class="header">
-            <h1>Ruply</h1>
-            <h2>Customer Statement</h2>
+            <h1>Sai Sri Kirana</h1>
+            <h2>Bill</h2>
           </div>
           <div class="customer-info">
-            <p><strong>Customer Name:</strong> ${customer.name}</p>
             ${customer.phone ? `<p><strong>Phone:</strong> ${customer.phone}</p>` : ''}
-            <p><strong>Outstanding Amount:</strong> <span class="amount">₹${Math.abs(customer.total_debt).toLocaleString()}</span></p>
-            <p><strong>Status:</strong> ${isDebtPositive ? 'Outstanding' : 'Paid'}</p>
+            <p><strong>Amount:</strong> <span class="amount">₹${Math.abs(customer.total_debt).toLocaleString()}</span></p>
+            <p><strong>Status:</strong> ${isDebtPositive ? 'Amount Due' : 'Paid'}</p>
             <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
           </div>
         </body>
@@ -68,11 +67,11 @@ export default function CustomerCard({ customer }: CustomerCardProps) {
     e.preventDefault();
     e.stopPropagation();
     
-    const message = `Customer Statement - Ruply\n\nCustomer: ${customer.name}${customer.phone ? `\nPhone: ${customer.phone}` : ''}\nOutstanding Amount: ₹${Math.abs(customer.total_debt).toLocaleString()}\nStatus: ${isDebtPositive ? 'Outstanding' : 'Paid'}\nDate: ${new Date().toLocaleDateString()}`;
+    const message = `Bill - Sai Sri Kirana\n\nAmount: ₹${Math.abs(customer.total_debt).toLocaleString()}\n${isDebtPositive ? 'Amount Due' : 'Paid'}\nDate: ${new Date().toLocaleDateString()}`;
     
     if (navigator.share) {
       navigator.share({
-        title: `Customer Statement - ${customer.name}`,
+        title: `Bill - Sai Sri Kirana`,
         text: message,
       });
     } else {
@@ -82,7 +81,7 @@ export default function CustomerCard({ customer }: CustomerCardProps) {
   };
 
   return (
-    <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-4 hover:bg-white/20 transition-all duration-200 cursor-pointer group">
+    <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-all duration-200 cursor-pointer group">
       <Link to={`/customer/${customer.id}`} className="block">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
@@ -110,7 +109,7 @@ export default function CustomerCard({ customer }: CustomerCardProps) {
               {isDebtPositive ? '+' : ''}₹{Math.abs(customer.total_debt).toLocaleString()}
             </p>
             <p className="text-xs text-gray-400">
-              {isDebtPositive ? 'Outstanding' : 'Paid'}
+              {isDebtPositive ? 'Due' : 'Paid'}
             </p>
           </div>
         </div>

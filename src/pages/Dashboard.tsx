@@ -33,7 +33,9 @@ export default function Dashboard() {
       customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (customer.phone && customer.phone.includes(searchQuery))
     );
-    setFilteredCustomers(filtered);
+    // Sort by total_debt in descending order (highest debt first)
+    const sorted = filtered.sort((a, b) => b.total_debt - a.total_debt);
+    setFilteredCustomers(sorted);
   }, [customers, searchQuery]);
 
   const fetchCustomers = async () => {

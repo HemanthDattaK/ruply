@@ -6,6 +6,7 @@ interface AppContextType {
   customers: Customer[];
   transactions: Transaction[];
   addCustomer: (name: string, phone?: string) => Promise<void>;
+  updateCustomer: (id: string, name: string, phone?: string) => Promise<void>;
   addTransaction: (customerId: string, amount: number, items: string, type: 'debt' | 'payment') => Promise<void>;
   deleteTransaction: (transactionId: string, customerId: string, amount: number, type: 'debt' | 'payment') => Promise<void>;
   deleteAllTransactions: (customerId: string) => Promise<void>;
@@ -69,6 +70,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const mappedCustomers = customersData.map(customer => ({
         id: customer.id,
         name: customer.name,
+        phone: customer.phone,
         totalDebt: customer.total_debt,
         createdAt: customer.created_at
       }));
@@ -103,6 +105,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const mappedCustomer = {
         id: data.id,
         name: data.name,
+        phone: data.phone,
         totalDebt: data.total_debt,
         createdAt: data.created_at
       };
@@ -114,6 +117,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const updateCustomer = async (id: string, name: string, phone?: string) => {
+    try {
+      const { error } = await supabase
+        .from('customers')
+        .update({ name, phone })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Update local state
+      setCustomers(customers.map(customer => 
+        customer.id === id 
+          ? { ...customer, name, phone }
+          : customer
+      ));
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      throw error;
+    }
+  };
   const addTransaction = async (customerId: string, amount: number, items: string, type: 'debt' | 'payment') => {
     try {
       // First, get the current customer's total_debt
@@ -255,6 +278,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         customers,
         transactions,
         addCustomer,
+        updateCustomer,
         addTransaction,
         deleteTransaction,
         deleteAllTransactions,
