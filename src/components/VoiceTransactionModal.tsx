@@ -106,13 +106,14 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
     // If no Telugu match, try English patterns
     if (!customerName) {
       const forMatch = lowerText.match(/(?:for|to)\s+([a-zA-Z\s]+?)(?:\s|$|,|\d)/);
-    if (forMatch) {
-      customerName = forMatch[1].trim();
-    } else {
-      // Try to extract name from the beginning
-      const nameMatch = lowerText.match(/^([a-zA-Z\s]+?)(?:\s|$|,|\d)/);
-      if (nameMatch) {
-        customerName = nameMatch[1].trim();
+      if (forMatch) {
+        customerName = forMatch[1].trim();
+      } else {
+        // Try to extract name from the beginning
+        const nameMatch = lowerText.match(/^([a-zA-Z\s]+?)(?:\s|$|,|\d)/);
+        if (nameMatch) {
+          customerName = nameMatch[1].trim();
+        }
       }
     }
 
