@@ -97,12 +97,12 @@ const AddTransaction: React.FC = () => {
                       id="customer"
                       value={selectedCustomerId}
                       onChange={(e) => setSelectedCustomerId(e.target.value)}
-                      className="w-full px-4 py-3 bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                      className="w-full px-4 py-3 bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors [&>option]:bg-gray-800 [&>option]:text-white"
                       required
                     >
-                      <option value="">Select Customer</option>
+                      <option value="" className="bg-gray-800 text-white">Select Customer</option>
                       {customers.map((customer) => (
-                        <option key={customer.id} value={customer.id}>
+                        <option key={customer.id} value={customer.id} className="bg-gray-800 text-white">
                           {customer.name}
                         </option>
                       ))}
