@@ -199,33 +199,47 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
 
     setProcessing(true);
     try {
+      let customerId = '';
+      
       // Check if customer exists
-      let customer = customers.find(c => 
+      const existingCustomer = customers.find(c => 
         c.name.toLowerCase() === parsedData.customerName!.toLowerCase()
       );
 
-      // If customer doesn't exist, create them
-      if (!customer) {
+      if (existingCustomer) {
+        customerId = existingCustomer.id;
+      } else {
+        // Create new customer and get their ID
         await addCustomer(parsedData.customerName!);
-        // Refresh customers list to get the new customer
-        const newCustomers = [...customers];
-        customer = newCustomers.find(c => 
+        
+        // Wait a moment for the customer to be added to the context
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Find the newly created customer
+        const newCustomer = customers.find(c => 
           c.name.toLowerCase() === parsedData.customerName!.toLowerCase()
         );
+        
+        if (newCustomer) {
+          customerId = newCustomer.id;
+        } else {
+          throw new Error('Failed to create customer');
+        }
       }
 
-      if (customer) {
-        await addTransaction(
-          customer.id,
-          parsedData.amount!,
-          parsedData.description || '',
-          parsedData.type || 'debt'
-        );
+      // Add the transaction
+      await addTransaction(
+        customerId,
+        parsedData.amount!,
+        parsedData.description || '',
+        parsedData.type || 'debt'
+      );
 
-        toast.success(`${parsedData.type === 'debt' ? 'Debt' : 'Payment'} added successfully!`);
-        onClose();
-        navigate(`/customer/${customer.id}`);
-      }
+      toast.success(`${parsedData.type === 'debt' ? 'Debt' : 'Payment'} added successfully!`);
+      resetModal();
+      onClose();
+      navigate(`/customer/${customerId}`);
+      
     } catch (error) {
       console.error('Error processing voice transaction:', error);
       toast.error('Failed to process transaction. Please try again.');
