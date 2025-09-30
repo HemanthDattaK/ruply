@@ -10,6 +10,7 @@ interface TransactionItemProps {
 const TransactionItem: React.FC<TransactionItemProps> = ({ transaction }) => {
   const { deleteTransaction } = useAppContext();
   const date = new Date(transaction.date).toLocaleDateString();
+  const time = new Date(transaction.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const isDebt = transaction.type === 'debt';
 
   const handleDelete = async () => {
@@ -37,7 +38,10 @@ const TransactionItem: React.FC<TransactionItemProps> = ({ transaction }) => {
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-400">{date}</span>
+          <div className="text-right">
+            <div className="text-sm text-gray-400">{date}</div>
+            <div className="text-xs text-gray-500">{time}</div>
+          </div>
           <button
             onClick={handleDelete}
             className="p-1 text-gray-400 hover:text-red-400 transition-colors"

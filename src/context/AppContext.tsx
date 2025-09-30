@@ -154,6 +154,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const newTotalDebt = currentTotalDebt + amountChange;
 
       // Add the transaction
+      const now = new Date();
       const { data: transaction, error: transactionError } = await supabase
         .from('transactions')
         .insert([{
@@ -161,7 +162,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           amount,
           items,
           type,
-          date: new Date().toISOString()
+          date: now.toISOString()
         }])
         .select()
         .single();
