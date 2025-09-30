@@ -19,8 +19,10 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
     amount?: number;
     description?: string;
     type?: 'debt' | 'payment';
+    translatedText?: string;
   } | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [showSubmitButton, setShowSubmitButton] = useState(false);
   
   const { customers, addCustomer, addTransaction } = useAppContext();
   const navigate = useNavigate();
@@ -53,6 +55,7 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
       if (finalTranscript) {
         setTranscript(finalTranscript);
         parseVoiceInput(finalTranscript);
+        setShowSubmitButton(true);
       }
     };
 
@@ -84,6 +87,9 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
 
   const parseVoiceInput = (text: string) => {
     const lowerText = text.toLowerCase();
+    
+    // First, try to translate Telugu to English for better processing
+    const translatedText = translateTeluguToEnglish(text);
     
     // Extract customer name - Telugu patterns and English patterns
     let customerName = '';
@@ -189,9 +195,65 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
         customerName: customerName.charAt(0).toUpperCase() + customerName.slice(1),
         amount,
         description,
-        type
+        type,
+        translatedText
       });
     }
+  };
+
+  const translateTeluguToEnglish = (text: string): string => {
+    // Simple Telugu to English translation mapping
+    const translations: { [key: string]: string } = {
+      // Names (common Telugu names)
+      'రాము': 'Ram',
+      'సీత': 'Sita', 
+      'కృష్ణ': 'Krishna',
+      'ప్రియ': 'Priya',
+      'రాజు': 'Raju',
+      'లక్ష్మి': 'Lakshmi',
+      'వెంకట్': 'Venkat',
+      'అనిల్': 'Anil',
+      
+      // Currency
+      'రూపాయలు': 'rupees',
+      'రూపాయల': 'rupees',
+      'టకా': 'rupees',
+      
+      // Transaction types - Debt
+      'అప్పు': 'owes',
+      'కొన్నాడు': 'bought',
+      'కొన్నది': 'bought',
+      'తీసుకున్నాడు': 'took',
+      'తీసుకున్నది': 'took',
+      'బాకీ': 'debt',
+      'రావాల్సింది': 'owes',
+      
+      // Transaction types - Payment
+      'చెల్లించాడు': 'paid',
+      'చెల్లించింది': 'paid',
+      'డబ్బు ఇచ్చాడు': 'gave money',
+      'డబ్బు ఇచ్చింది': 'gave money',
+      'చెల్లింపు': 'payment',
+      'వచ్చింది': 'received',
+      'తిరిగి ఇచ్చాడు': 'returned money',
+      
+      // Items/Description
+      'కిరాణా': 'groceries',
+      'వస్తువులు': 'items',
+      'కోసం': 'for',
+      'నుండి': 'from',
+      'కి': 'to'
+    };
+
+    let translatedText = text;
+    
+    // Replace Telugu words with English equivalents
+    Object.entries(translations).forEach(([telugu, english]) => {
+      const regex = new RegExp(telugu, 'gi');
+      translatedText = translatedText.replace(regex, english);
+    });
+    
+    return translatedText;
   };
 
   const handleConfirm = async () => {
@@ -252,6 +314,7 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
     setTranscript('');
     setParsedData(null);
     setIsListening(false);
+    setShowSubmitButton(false);
   };
 
   const handleClose = () => {
@@ -327,6 +390,13 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
                 <div className="bg-white/10 rounded-lg p-4 space-y-3">
                   <h3 className="text-sm font-medium text-gray-300 mb-3">Detected Information:</h3>
                   
+                  {parsedData.translatedText && parsedData.translatedText !== transcript && (
+                    <div className="bg-blue-500/10 rounded-lg p-3 mb-3">
+                      <p className="text-xs text-blue-300 mb-1">English Translation:</p>
+                      <p className="text-blue-100 text-sm">{parsedData.translatedText}</p>
+                    </div>
+                  )}
+                  
                   <div className="flex items-center space-x-3">
                     <User size={16} className="text-blue-400" />
                     <div>
@@ -373,11 +443,26 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
                 >
                   Cancel
                 </Button>
-                {parsedData && (
+                {showSubmitButton && (
+                  <Button
+                    onClick={() => {
+                      if (parsedData) {
+                        handleConfirm();
+                      } else {
+                        toast.error('Please speak a valid transaction');
+                      }
+                    }}
+                    loading={processing}
+                    className="flex-1 bg-green-500 hover:bg-green-600 text-white"
+                  >
+                    Submit Transaction
+                  </Button>
+                )}
+                {parsedData && showSubmitButton && (
                   <Button
                     onClick={handleConfirm}
                     loading={processing}
-                    className="flex-1 bg-blue-500 hover:bg-blue-600 text-white"
+                    className="flex-1 bg-blue-500 hover:bg-blue-600 text-white ml-2"
                   >
                     Confirm & Add
                   </Button>
