@@ -30,8 +30,7 @@ const Header: React.FC<HeaderProps> = ({ title, showBack = false }) => {
             </motion.button>
           ) : (
             <div className="mr-3">
-              <h1 className="text-lg font-bold text-gray-900">Sai Sri Kirana</h1>
-              <h1 className="text-lg font-bold text-white">Ruply</h1>
+              <h1 className="text-lg font-bold text-white">KV Satyanarayana</h1>
             </div>
           )}
           {showBack && (

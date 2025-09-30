@@ -54,7 +54,7 @@ const CustomerProfile: React.FC = () => {
       <html>
         <head>
           <meta charset="utf-8" />
-          <title>Sai Sri Kirana</title>
+          <title>KV Satyanarayana</title>
           <style>
             body { 
               font-family: Arial, sans-serif; 
@@ -125,7 +125,7 @@ const CustomerProfile: React.FC = () => {
         </head>
         <body>
           <div class="header">
-            <h1>Sai Sri Kirana</h1>
+            <h1>KV Satyanarayana</h1>
             <h2>Customer Statement</h2>
           </div>
           <div class="customer-info">
@@ -174,13 +174,13 @@ const CustomerProfile: React.FC = () => {
   const handleShare = async () => {
     const amount = customer ? Math.abs(customer.totalDebt) : 0;
     const status = customer && customer.totalDebt > 0 ? 'Amount Due' : 'Fully Paid';
-    const message = `📋 Sai Sri Kirana\n\nCustomer: ${customer?.name ?? ''}\n${customer?.phone ? `Phone: ${customer.phone}\n` : ''}Total Bill: ₹${amount.toLocaleString()}\nStatus: ${status}\nDate: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}\n\nThank you`;
+    const message = `📋 KV Satyanarayana\n\nCustomer: ${customer?.name ?? ''}\n${customer?.phone ? `Phone: ${customer.phone}\n` : ''}Total Bill: ₹${amount.toLocaleString()}\nStatus: ${status}\nDate: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}\n\nThank you`;
 
     // Try native share first
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Sai Sri Kirana',
+          title: 'KV Satyanarayana',
           text: message,
         });
         return;

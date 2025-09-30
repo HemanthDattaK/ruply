@@ -169,7 +169,7 @@ const AddTransaction: React.FC = () => {
 
                 <InputWithVoice
                   id="amount"
-                  label="Amount ($)"
+                  label="Amount (₹)"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
