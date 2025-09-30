@@ -49,7 +49,7 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
           finalTranscript += event.results[i][0].transcript;
         }
       }
-    }
+      
       if (finalTranscript) {
         setTranscript(finalTranscript);
         parseVoiceInput(finalTranscript);
