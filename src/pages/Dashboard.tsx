@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Users, IndianRupee, Search } from 'lucide-react';
+import { Plus, Users, IndianRupee, Search, Mic } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -7,6 +7,7 @@ import CustomerCard from '../components/CustomerCard';
 import Button from '../components/ui/Button';
 import FloatingActionButton from '../components/FloatingActionButton';
 import Header from '../components/Header';
+import VoiceTransactionModal from '../components/VoiceTransactionModal';
 
 interface Customer {
   id: string;
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const [totalOutstanding, setTotalOutstanding] = useState(0);
   const [activeCustomers, setActiveCustomers] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -111,7 +113,7 @@ export default function Dashboard() {
         {/* Quick Actions */}
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-8 border border-white/10">
           <h2 className="text-lg font-semibold text-white mb-4">Quick Actions</h2>
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Link to="/add-customer">
               <Button className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white">
                 <Plus className="h-4 w-4 mr-2" />
@@ -124,6 +126,13 @@ export default function Dashboard() {
                 Add Transaction
               </Button>
             </Link>
+            <Button 
+              onClick={() => setIsVoiceModalOpen(true)}
+              className="w-full sm:w-auto bg-purple-500 hover:bg-purple-600 text-white"
+            >
+              <Mic className="h-4 w-4 mr-2" />
+              Add with Voice
+            </Button>
           </div>
         </div>
 
@@ -174,6 +183,11 @@ export default function Dashboard() {
         onClick={() => navigate('/add-transaction')}
         icon={<Plus size={24} />}
         label="Add Transaction"
+      />
+
+      <VoiceTransactionModal 
+        isOpen={isVoiceModalOpen}
+        onClose={() => setIsVoiceModalOpen(false)}
       />
     </div>
   );
