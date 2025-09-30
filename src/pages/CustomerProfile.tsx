@@ -89,10 +89,16 @@ const CustomerProfile: React.FC = () => {
     const message = `Bill - Ruply\n\nCustomer: ${customer?.name}\n${customer?.phone ? `Phone: ${customer.phone}\n` : ''}Amount: ₹${customer ? Math.abs(customer.totalDebt).toLocaleString() : '0'}\n${customer && customer.totalDebt > 0 ? 'Amount Due' : 'Paid'}\nDate: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
     
     if (navigator.share) {
-      navigator.share({
-        title: `Bill - Ruply`,
-        text: message,
-      });
+      try {
+        navigator.share({
+          title: `Bill - Ruply`,
+          text: message,
+        });
+      } catch (error) {
+        // Fallback to WhatsApp if share fails
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+      }
     } else {
       const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
