@@ -57,9 +57,13 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
     };
 
     recognition.onerror = (event) => {
-      console.error('Speech recognition error:', event.error);
       setIsListening(false);
-      if (event.error !== 'aborted') {
+      const errorType = String(event.error);
+      
+      if (errorType === 'aborted') {
+        console.warn('Speech recognition aborted:', errorType);
+      } else {
+        console.error('Speech recognition error:', errorType);
         toast.error('Speech recognition error. Please try again.');
       }
     };
