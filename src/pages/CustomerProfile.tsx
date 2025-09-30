@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Clock, Trash2, UserX, PlusCircle, Edit, Phone, Printer, Share2 } from 'lucide-react';
+import { Clock, Trash2, UserX, PlusCircle, CreditCard as Edit, Phone, Printer, Share2 } from 'lucide-react';
 import { useState } from 'react';
 import Header from '../components/Header';
 import TransactionItem from '../components/TransactionItem';
