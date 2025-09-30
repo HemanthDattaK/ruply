@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Users, DollarSign, Search } from 'lucide-react';
+import { Plus, Users, IndianRupee, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -84,7 +84,7 @@ export default function Dashboard() {
           <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/10">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <DollarSign className="h-8 w-8 text-red-400" />
+                <IndianRupee className="h-8 w-8 text-red-400" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-300">Total Outstanding</p>
