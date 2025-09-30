@@ -32,6 +32,7 @@ const Header: React.FC<HeaderProps> = ({ title, showBack = false }) => {
             <div className="mr-3">
               <h1 className="text-lg font-bold text-gray-900">Sai Sri Kirana</h1>
               <h1 className="text-lg font-bold text-white">Ruply</h1>
+            </div>
           )}
           {showBack && (
             <div>
