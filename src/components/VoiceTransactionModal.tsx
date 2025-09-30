@@ -36,7 +36,7 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
     
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = 'en-US';
+    recognition.lang = 'te-IN'; // Telugu (India)
 
     setIsListening(true);
     setTranscript('');
@@ -49,6 +49,7 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
           finalTranscript += event.results[i][0].transcript;
         }
       }
+    }
       if (finalTranscript) {
         setTranscript(finalTranscript);
         parseVoiceInput(finalTranscript);
@@ -77,9 +78,34 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
   const parseVoiceInput = (text: string) => {
     const lowerText = text.toLowerCase();
     
-    // Extract customer name (look for patterns like "for [name]", "to [name]", or names at the beginning)
+    // Extract customer name - Telugu patterns and English patterns
     let customerName = '';
-    const forMatch = lowerText.match(/(?:for|to)\s+([a-zA-Z\s]+?)(?:\s|$|,|\d)/);
+    
+    // Telugu patterns: కి, కోసం, వాడు, వాళ్ళు, etc.
+    const teluguPatterns = [
+      /([a-zA-Zఅ-హ\s]+?)(?:\s+కి\s+|\s+కోసం\s+|\s+వాడు\s+|\s+వాళ్ళు\s+)/,
+      /([a-zA-Zఅ-హ\s]+?)(?:\s+రూపాయలు|\s+రూపాయల|\s+టకా)/,
+      /^([a-zA-Zఅ-హ\s]+?)(?:\s|$|,|\d)/
+    ];
+    
+    // English patterns
+    const englishPatterns = [
+      /(?:for|to)\s+([a-zA-Z\s]+?)(?:\s|$|,|\d)/,
+      /^([a-zA-Z\s]+?)(?:\s|$|,|\d)/
+    ];
+    
+    // Try Telugu patterns first
+    for (const pattern of teluguPatterns) {
+      const match = text.match(pattern);
+      if (match && match[1]) {
+        customerName = match[1].trim();
+        break;
+      }
+    }
+    
+    // If no Telugu match, try English patterns
+    if (!customerName) {
+      const forMatch = lowerText.match(/(?:for|to)\s+([a-zA-Z\s]+?)(?:\s|$|,|\d)/);
     if (forMatch) {
       customerName = forMatch[1].trim();
     } else {
@@ -90,9 +116,16 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
       }
     }
 
-    // Extract amount (look for numbers with rupees, rs, or just numbers)
+    // Extract amount - Telugu and English patterns
     let amount = 0;
-    const amountMatches = text.match(/(?:rupees?|rs\.?|₹)?\s*(\d+(?:\.\d{1,2})?)|(\d+(?:\.\d{1,2})?)\s*(?:rupees?|rs\.?|₹)/gi);
+    
+    // Telugu currency patterns: రూపాయలు, రూపాయల, టకా
+    const teluguAmountMatches = text.match(/(?:రూపాయలు|రూపాయల|టకా)?\s*(\d+(?:\.\d{1,2})?)|(\d+(?:\.\d{1,2})?)\s*(?:రూపాయలు|రూపాయల|టకా)/gi);
+    
+    // English currency patterns
+    const englishAmountMatches = text.match(/(?:rupees?|rs\.?|₹)?\s*(\d+(?:\.\d{1,2})?)|(\d+(?:\.\d{1,2})?)\s*(?:rupees?|rs\.?|₹)/gi);
+    
+    const amountMatches = teluguAmountMatches || englishAmountMatches;
     if (amountMatches) {
       const numMatch = amountMatches[0].match(/(\d+(?:\.\d{1,2})?)/);
       if (numMatch) {
@@ -102,15 +135,29 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
 
     // Determine transaction type
     let type: 'debt' | 'payment' = 'debt';
-    if (lowerText.includes('paid') || lowerText.includes('payment') || lowerText.includes('received') || lowerText.includes('gave money')) {
+    
+    // Telugu payment keywords: చెల్లించాడు, డబ్బు ఇచ్చాడు, చెల్లింపు, వచ్చింది
+    const teluguPaymentKeywords = ['చెల్లించాడు', 'చెల్లించింది', 'డబ్బు ఇచ్చాడు', 'డబ్బు ఇచ్చింది', 'చెల్లింపు', 'వచ్చింది', 'తిరిగి ఇచ్చాడు'];
+    
+    // Telugu debt keywords: అప్పు, కొన్నాడు, తీసుకున్నాడు, బాకీ
+    const teluguDebtKeywords = ['అప్పు', 'కొన్నాడు', 'కొన్నది', 'తీసుకున్నాడు', 'తీసుకున్నది', 'బాకీ', 'రావాల్సింది'];
+    
+    if (lowerText.includes('paid') || lowerText.includes('payment') || lowerText.includes('received') || lowerText.includes('gave money') ||
+        teluguPaymentKeywords.some(keyword => text.includes(keyword))) {
       type = 'payment';
-    } else if (lowerText.includes('owes') || lowerText.includes('debt') || lowerText.includes('borrowed') || lowerText.includes('bought')) {
+    } else if (lowerText.includes('owes') || lowerText.includes('debt') || lowerText.includes('borrowed') || lowerText.includes('bought') ||
+               teluguDebtKeywords.some(keyword => text.includes(keyword))) {
       type = 'debt';
     }
 
     // Extract description (everything else)
     let description = '';
     const descriptionPatterns = [
+      // Telugu patterns
+      /(?:కోసం|కొన్నాడు|కొన్నది|తీసుకున్నాడు|తీసుకున్నది)\s+(.+?)(?:\s+(?:రూపాయలు|రూపాయల|టకా|\d)|$)/i,
+      /(?:చెల్లించాడు|చెల్లించింది|చెల్లింపు)\s+(.+?)(?:\s+(?:రూపాయలు|రూపాయల|టకా|\d)|$)/i,
+      
+      // English patterns
       /(?:for|bought|purchased)\s+(.+?)(?:\s+(?:rupees?|rs\.?|₹|\d)|$)/i,
       /(?:owes|debt|borrowed)\s+(.+?)(?:\s+(?:rupees?|rs\.?|₹|\d)|$)/i,
       /(?:paid|payment|received)\s+(.+?)(?:\s+(?:rupees?|rs\.?|₹|\d)|$)/i
@@ -126,7 +173,7 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
 
     // If no specific description found, use a generic one based on type
     if (!description && customerName && amount) {
-      description = type === 'debt' ? 'Items purchased' : 'Payment received';
+      description = type === 'debt' ? 'వస్తువులు కొన్నారు' : 'చెల్లింపు వచ్చింది';
     }
 
     if (customerName && amount > 0) {
@@ -241,7 +288,7 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
                   {isListening ? 'Listening... Tap to stop' : 'Tap to start speaking'}
                 </p>
                 <p className="text-gray-400 text-xs">
-                  Say something like: "John owes 500 rupees for groceries" or "Received 200 from Mary"
+                  తెలుగులో మాట్లాడండి: "రాము కి 500 రూపాయలు కిరాణా కోసం" లేదా "మేరీ నుండి 200 రూపాయలు వచ్చింది"
                 </p>
               </div>
 
