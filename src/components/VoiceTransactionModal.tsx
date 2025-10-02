@@ -23,6 +23,7 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
   } | null>(null);
   const [processing, setProcessing] = useState(false);
   const [showSubmitButton, setShowSubmitButton] = useState(false);
+  const [recognition, setRecognition] = useState<any>(null);
   
   const { customers, addCustomer, addTransaction } = useAppContext();
   const navigate = useNavigate();
@@ -33,18 +34,22 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
       return;
     }
 
+    // Stop any existing recognition
+    if (recognition) {
+      recognition.stop();
+      recognition.abort();
+    }
     const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
-    const recognition = new SpeechRecognition();
+    const newRecognition = new SpeechRecognition();
     
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'te-IN'; // Telugu (India)
+    newRecognition.continuous = true;
+    newRecognition.interimResults = true;
+    newRecognition.lang = 'te-IN'; // Telugu (India)
 
+    setRecognition(newRecognition);
     setIsListening(true);
-    setTranscript('');
-    setParsedData(null);
 
-    recognition.onresult = (event) => {
+    newRecognition.onresult = (event) => {
       let finalTranscript = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
         if (event.results[i].isFinal) {
@@ -56,11 +61,14 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
         setTranscript(finalTranscript);
         parseVoiceInput(finalTranscript);
         setShowSubmitButton(true);
+        // Auto-stop after getting final result
+        newRecognition.stop();
       }
     };
 
-    recognition.onerror = (event) => {
+    newRecognition.onerror = (event) => {
       setIsListening(false);
+      setRecognition(null);
       const errorType = String(event.error);
       
       if (errorType === 'aborted') {
@@ -74,14 +82,20 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
       }
     };
 
-    recognition.onend = () => {
+    newRecognition.onend = () => {
       setIsListening(false);
+      setRecognition(null);
     };
 
-    recognition.start();
+    newRecognition.start();
   };
 
   const stopListening = () => {
+    if (recognition) {
+      recognition.stop();
+      recognition.abort();
+      setRecognition(null);
+    }
     setIsListening(false);
   };
 
@@ -258,6 +272,12 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
   };
 
   const resetModal = () => {
+    // Stop any active recognition
+    if (recognition) {
+      recognition.stop();
+      recognition.abort();
+      setRecognition(null);
+    }
     setTranscript('');
     setParsedData(null);
     setIsListening(false);
