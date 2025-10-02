@@ -111,16 +111,30 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
     // Extract customer name - Telugu patterns and English patterns
     let customerName = '';
     
-    // Simple approach: Extract first word(s) as customer name
-    const words = text.trim().split(/\s+/);
-    if (words.length > 0) {
-      // Take first 1-2 words as customer name
-      customerName = words[0];
-      if (words.length > 1 && words[1].length > 2 && !words[1].match(/\d/)) {
-        customerName += ' ' + words[1];
+    // Improved name extraction
+    const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+    
+    // Remove common Telugu particles and find the actual name
+    const nameWords = [];
+    for (let i = 0; i < Math.min(3, words.length); i++) {
+      const word = words[i];
+      // Skip numbers, currency words, and common particles
+      if (!word.match(/\d/) && 
+          !['రూపాయలు', 'రూపాయల', 'టకా', 'rupees', 'కి', 'కో', 'నుండి', 'వరకు'].includes(word.toLowerCase())) {
+        // Clean the word of Telugu particles
+        const cleanWord = word.replace(/[కికోసంనుండివరకు]/g, '').trim();
+        if (cleanWord.length > 1) {
+          nameWords.push(cleanWord);
+        }
+        // Stop after finding 2 name words or if we hit a transaction keyword
+        if (nameWords.length >= 2 || 
+            ['కొన్నాడు', 'కొన్నది', 'చెల్లించాడు', 'చెల్లించింది', 'bought', 'paid'].includes(word.toLowerCase())) {
+          break;
+        }
       }
-      customerName = customerName.replace(/[కికోసంనుండి]/g, '').trim();
     }
+    
+    customerName = nameWords.join(' ');
     
     console.log('Extracted customer name:', customerName);
 
@@ -259,13 +273,28 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
     const translations: { [key: string]: string } = {
       // Names (common Telugu names)
       'రాము': 'Ram',
+      'రామ': 'Ram',
       'సీత': 'Sita', 
+      'సీతా': 'Sita',
       'కృష్ణ': 'Krishna',
+      'కృష్ణా': 'Krishna',
       'ప్రియ': 'Priya',
+      'ప్రియా': 'Priya',
       'రాజు': 'Raju',
+      'రాజ': 'Raja',
       'లక్ష్మి': 'Lakshmi',
+      'లక్ష్మీ': 'Lakshmi',
       'వెంకట్': 'Venkat',
+      'వెంకటేష్': 'Venkatesh',
       'అనిల్': 'Anil',
+      'అనిత': 'Anita',
+      'సుధా': 'Sudha',
+      'రవి': 'Ravi',
+      'రవీ': 'Ravi',
+      'మీరా': 'Meera',
+      'గీతా': 'Geetha',
+      'రాధ': 'Radha',
+      'రాధా': 'Radha',
       
       // Currency
       'రూపాయలు': 'rupees',
@@ -374,7 +403,7 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          className="bg-gradient-to-b from-[#0F172A] to-[#1E293B] rounded-2xl p-4 sm:p-6 w-full max-w-md mx-4 border border-white/10 max-h-[90vh] overflow-y-auto"
           onClick={handleClose}
         >
           <motion.div
@@ -384,20 +413,20 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
             className="bg-gradient-to-b from-[#0F172A] to-[#1E293B] rounded-2xl p-6 w-full max-w-md border border-white/10"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-white">Voice Transaction</h2>
               <button
                 onClick={handleClose}
-                className="text-gray-400 hover:text-white transition-colors p-1"
+                className="text-gray-400 hover:text-white transition-colors p-2 -mr-2"
               >
                 <X size={24} />
               </button>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Voice Input Section */}
               <div className="text-center">
-                <div className="mb-4">
+                <div className="mb-3">
                   <motion.button
                     onClick={isListening ? stopListening : startListening}
                     className={`w-20 h-20 rounded-full flex items-center justify-center transition-all ${
@@ -414,22 +443,22 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
                     )}
                   </motion.button>
                 </div>
-                <p className="text-gray-300 text-sm mb-2">
+                <p className="text-gray-300 text-sm mb-3">
                   {isListening ? 'Listening... Tap to stop' : 'Tap to start speaking'}
                 </p>
                 <div className="text-gray-400 text-xs space-y-1">
                   <p className="font-medium">Telugu Examples:</p>
-                  <p>"రాము 500 రూపాయలు కిరాణా కొన్నాడు"</p>
-                  <p>"సీత 200 రూపాయలు చెల్లించింది"</p>
+                  <p className="break-words">"రాము అయిదువందలు రూపాయలు కొన్నాడు"</p>
+                  <p className="break-words">"సీత రెండువందలు రూపాయలు చెల్లించింది"</p>
                   <p className="font-medium mt-2">English Examples:</p>
-                  <p>"Ram 500 rupees groceries bought"</p>
-                  <p>"Sita 200 rupees paid"</p>
+                  <p className="break-words">"Ram five hundred rupees bought"</p>
+                  <p className="break-words">"Sita two hundred rupees paid"</p>
                 </div>
               </div>
 
               {/* Transcript Display */}
               {transcript && (
-                <div className="bg-white/10 rounded-lg p-4">
+                <div className="bg-white/10 rounded-lg p-3">
                   <h3 className="text-sm font-medium text-gray-300 mb-2">What you said:</h3>
                   <p className="text-white text-sm">{transcript}</p>
                 </div>
@@ -437,17 +466,17 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
 
               {/* Parsed Data Display */}
               {parsedData && (
-                <div className="bg-white/10 rounded-lg p-4 space-y-3">
-                  <h3 className="text-sm font-medium text-gray-300 mb-3">Detected Information:</h3>
+                <div className="bg-white/10 rounded-lg p-3 space-y-2">
+                  <h3 className="text-sm font-medium text-gray-300 mb-2">Detected Information:</h3>
                   
                   {parsedData.translatedText && parsedData.translatedText !== transcript && (
-                    <div className="bg-blue-500/10 rounded-lg p-3 mb-3">
+                    <div className="bg-blue-500/10 rounded-lg p-2 mb-2">
                       <p className="text-xs text-blue-300 mb-1">English Translation:</p>
                       <p className="text-blue-100 text-sm">{parsedData.translatedText}</p>
                     </div>
                   )}
                   
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2">
                     <User size={16} className="text-blue-400" />
                     <div>
                       <p className="text-xs text-gray-400">Customer</p>
@@ -455,7 +484,7 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2">
                     <CreditCard size={16} className="text-green-400" />
                     <div>
                       <p className="text-xs text-gray-400">Amount</p>
@@ -463,7 +492,7 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2">
                     <div className={`w-4 h-4 rounded-full ${
                       parsedData.type === 'debt' ? 'bg-red-400' : 'bg-green-400'
                     }`} />
@@ -474,7 +503,7 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
                   </div>
 
                   {parsedData.description && (
-                    <div className="flex items-start space-x-3">
+                    <div className="flex items-start space-x-2">
                       <Plus size={16} className="text-gray-400 mt-0.5" />
                       <div>
                         <p className="text-xs text-gray-400">Description</p>
@@ -489,32 +518,17 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
               <div className="flex space-x-3">
                 <Button
                   onClick={handleClose}
-                  className="flex-1 border border-white/20 text-white hover:bg-white/10"
+                  className="flex-1 border border-white/20 text-white hover:bg-white/10 text-sm py-2"
                 >
                   Cancel
                 </Button>
-                {showSubmitButton && (
-                  <Button
-                    onClick={() => {
-                      if (parsedData) {
-                        handleConfirm();
-                      } else {
-                        toast.error('Please speak a valid transaction');
-                      }
-                    }}
-                    loading={processing}
-                    className="flex-1 bg-green-500 hover:bg-green-600 text-white"
-                  >
-                    Submit Transaction
-                  </Button>
-                )}
-                {parsedData && showSubmitButton && (
+                {showSubmitButton && parsedData && (
                   <Button
                     onClick={handleConfirm}
                     loading={processing}
-                    className="flex-1 bg-blue-500 hover:bg-blue-600 text-white ml-2"
+                    className="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-sm py-2"
                   >
-                    Confirm & Add
+                    Submit
                   </Button>
                 )}
               </div>
