@@ -128,7 +128,8 @@ export default function Dashboard() {
             </Link>
             <Button 
               onClick={() => setIsVoiceModalOpen(true)}
-              className="w-full sm:w-auto bg-purple-500 hover:bg-purple-600 text-white"
+              variant="primary"
+              className="w-full sm:w-auto bg-purple-500 hover:bg-purple-600 text-white border-0"
             >
               <Mic className="h-4 w-4 mr-2" />
               Add with Voice
