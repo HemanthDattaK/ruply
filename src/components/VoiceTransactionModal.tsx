@@ -86,109 +86,68 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
   };
 
   const parseVoiceInput = (text: string) => {
-    const lowerText = text.toLowerCase();
+    console.log('Original text:', text);
+    const lowerText = text.toLowerCase().trim();
     
     // First, try to translate Telugu to English for better processing
     const translatedText = translateTeluguToEnglish(text);
+    console.log('Translated text:', translatedText);
     
     // Extract customer name - Telugu patterns and English patterns
     let customerName = '';
     
-    // Telugu patterns: కి, కోసం, వాడు, వాళ్ళు, etc.
-    const teluguPatterns = [
-      /([a-zA-Zఅ-హ\s]+?)(?:\s+కి\s+|\s+కోసం\s+|\s+వాడు\s+|\s+వాళ్ళు\s+)/,
-      /([a-zA-Zఅ-హ\s]+?)(?:\s+రూపాయలు|\s+రూపాయల|\s+టకా)/,
-      /^([a-zA-Zఅ-హ\s]+?)(?:\s|$|,|\d)/
-    ];
-    
-    // English patterns
-    const englishPatterns = [
-      /(?:for|to)\s+([a-zA-Z\s]+?)(?:\s|$|,|\d)/,
-      /^([a-zA-Z\s]+?)(?:\s|$|,|\d)/
-    ];
-    
-    // Try Telugu patterns first
-    for (const pattern of teluguPatterns) {
-      const match = text.match(pattern);
-      if (match && match[1]) {
-        customerName = match[1].trim();
-        break;
+    // Simple approach: Extract first word(s) as customer name
+    const words = text.trim().split(/\s+/);
+    if (words.length > 0) {
+      // Take first 1-2 words as customer name
+      customerName = words[0];
+      if (words.length > 1 && words[1].length > 2 && !words[1].match(/\d/)) {
+        customerName += ' ' + words[1];
       }
+      customerName = customerName.replace(/[కికోసంనుండి]/g, '').trim();
     }
     
-    // If no Telugu match, try English patterns
-    if (!customerName) {
-      const forMatch = lowerText.match(/(?:for|to)\s+([a-zA-Z\s]+?)(?:\s|$|,|\d)/);
-      if (forMatch) {
-        customerName = forMatch[1].trim();
-      } else {
-        // Try to extract name from the beginning
-        const nameMatch = lowerText.match(/^([a-zA-Z\s]+?)(?:\s|$|,|\d)/);
-        if (nameMatch) {
-          customerName = nameMatch[1].trim();
-        }
-      }
-    }
+    console.log('Extracted customer name:', customerName);
 
     // Extract amount - Telugu and English patterns
     let amount = 0;
     
-    // Telugu currency patterns: రూపాయలు, రూపాయల, టకా
-    const teluguAmountMatches = text.match(/(?:రూపాయలు|రూపాయల|టకా)?\s*(\d+(?:\.\d{1,2})?)|(\d+(?:\.\d{1,2})?)\s*(?:రూపాయలు|రూపాయల|టకా)/gi);
-    
-    // English currency patterns
-    const englishAmountMatches = text.match(/(?:rupees?|rs\.?|₹)?\s*(\d+(?:\.\d{1,2})?)|(\d+(?:\.\d{1,2})?)\s*(?:rupees?|rs\.?|₹)/gi);
-    
-    const amountMatches = teluguAmountMatches || englishAmountMatches;
-    if (amountMatches) {
-      const numMatch = amountMatches[0].match(/(\d+(?:\.\d{1,2})?)/);
-      if (numMatch) {
-        amount = parseFloat(numMatch[1]);
-      }
+    // Simple number extraction
+    const numberMatch = text.match(/(\d+(?:\.\d{1,2})?)/);
+    if (numberMatch) {
+      amount = parseFloat(numberMatch[1]);
     }
+    
+    console.log('Extracted amount:', amount);
 
     // Determine transaction type
     let type: 'debt' | 'payment' = 'debt';
     
-    // Telugu payment keywords: చెల్లించాడు, డబ్బు ఇచ్చాడు, చెల్లింపు, వచ్చింది
-    const teluguPaymentKeywords = ['చెల్లించాడు', 'చెల్లించింది', 'డబ్బు ఇచ్చాడు', 'డబ్బు ఇచ్చింది', 'చెల్లింపు', 'వచ్చింది', 'తిరిగి ఇచ్చాడు'];
+    // Check for payment keywords
+    const paymentKeywords = ['చెల్లించాడు', 'చెల్లించింది', 'వచ్చింది', 'paid', 'payment', 'received'];
+    const debtKeywords = ['కొన్నాడు', 'కొన్నది', 'అప్పు', 'బాకీ', 'bought', 'owes', 'debt'];
     
-    // Telugu debt keywords: అప్పు, కొన్నాడు, తీసుకున్నాడు, బాకీ
-    const teluguDebtKeywords = ['అప్పు', 'కొన్నాడు', 'కొన్నది', 'తీసుకున్నాడు', 'తీసుకున్నది', 'బాకీ', 'రావాల్సింది'];
-    
-    if (lowerText.includes('paid') || lowerText.includes('payment') || lowerText.includes('received') || lowerText.includes('gave money') ||
-        teluguPaymentKeywords.some(keyword => text.includes(keyword))) {
+    if (paymentKeywords.some(keyword => text.includes(keyword))) {
       type = 'payment';
-    } else if (lowerText.includes('owes') || lowerText.includes('debt') || lowerText.includes('borrowed') || lowerText.includes('bought') ||
-               teluguDebtKeywords.some(keyword => text.includes(keyword))) {
+    } else if (debtKeywords.some(keyword => text.includes(keyword))) {
       type = 'debt';
     }
-
-    // Extract description (everything else)
-    let description = '';
-    const descriptionPatterns = [
-      // Telugu patterns
-      /(?:కోసం|కొన్నాడు|కొన్నది|తీసుకున్నాడు|తీసుకున్నది)\s+(.+?)(?:\s+(?:రూపాయలు|రూపాయల|టకా|\d)|$)/i,
-      /(?:చెల్లించాడు|చెల్లించింది|చెల్లింపు)\s+(.+?)(?:\s+(?:రూపాయలు|రూపాయల|టకా|\d)|$)/i,
-      
-      // English patterns
-      /(?:for|bought|purchased)\s+(.+?)(?:\s+(?:rupees?|rs\.?|₹|\d)|$)/i,
-      /(?:owes|debt|borrowed)\s+(.+?)(?:\s+(?:rupees?|rs\.?|₹|\d)|$)/i,
-      /(?:paid|payment|received)\s+(.+?)(?:\s+(?:rupees?|rs\.?|₹|\d)|$)/i
-    ];
     
-    for (const pattern of descriptionPatterns) {
-      const match = text.match(pattern);
-      if (match && match[1]) {
-        description = match[1].trim();
-        break;
-      }
-    }
+    console.log('Detected type:', type);
 
-    // If no specific description found, use a generic one based on type
-    if (!description && customerName && amount) {
-      description = type === 'debt' ? 'వస్తువులు కొన్నారు' : 'చెల్లింపు వచ్చింది';
+    // Simple description extraction
+    let description = '';
+    if (text.includes('కిరాణా') || text.includes('groceries')) {
+      description = 'Groceries';
+    } else if (text.includes('వస్తువులు') || text.includes('items')) {
+      description = 'Items purchased';
+    } else if (type === 'payment') {
+      description = 'Payment received';
+    } else {
+      description = 'Purchase';
     }
+    
+    console.log('Final parsed data:', { customerName, amount, description, type });
 
     if (customerName && amount > 0) {
       setParsedData({
@@ -198,6 +157,8 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
         type,
         translatedText
       });
+    } else {
+      console.log('Invalid transaction - missing customer name or amount');
     }
   };
 
@@ -372,9 +333,14 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
                 <p className="text-gray-300 text-sm mb-2">
                   {isListening ? 'Listening... Tap to stop' : 'Tap to start speaking'}
                 </p>
-                <p className="text-gray-400 text-xs">
-                  తెలుగులో మాట్లాడండి: "రాము కి 500 రూపాయలు కిరాణా కోసం" లేదా "మేరీ నుండి 200 రూపాయలు వచ్చింది"
-                </p>
+                <div className="text-gray-400 text-xs space-y-1">
+                  <p className="font-medium">Telugu Examples:</p>
+                  <p>"రాము 500 రూపాయలు కిరాణా కొన్నాడు"</p>
+                  <p>"సీత 200 రూపాయలు చెల్లించింది"</p>
+                  <p className="font-medium mt-2">English Examples:</p>
+                  <p>"Ram 500 rupees groceries bought"</p>
+                  <p>"Sita 200 rupees paid"</p>
+                </div>
               </div>
 
               {/* Transcript Display */}
