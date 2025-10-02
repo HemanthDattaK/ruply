@@ -111,6 +111,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
 
       setCustomers([...customers, mappedCustomer]);
+      return mappedCustomer;
     } catch (error) {
       console.error('Error adding customer:', error);
       throw error;

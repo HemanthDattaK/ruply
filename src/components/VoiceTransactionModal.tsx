@@ -222,7 +222,7 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
 
     setProcessing(true);
     try {
-      let customerId = '';
+      let customer: any;
       
       // Check if customer exists
       const existingCustomer = customers.find(c => 
@@ -230,29 +230,15 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
       );
 
       if (existingCustomer) {
-        customerId = existingCustomer.id;
+        customer = existingCustomer;
       } else {
-        // Create new customer and get their ID
-        await addCustomer(parsedData.customerName!);
-        
-        // Wait a moment for the customer to be added to the context
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Find the newly created customer
-        const newCustomer = customers.find(c => 
-          c.name.toLowerCase() === parsedData.customerName!.toLowerCase()
-        );
-        
-        if (newCustomer) {
-          customerId = newCustomer.id;
-        } else {
-          throw new Error('Failed to create customer');
-        }
+        // Create new customer and get the returned customer object
+        customer = await addCustomer(parsedData.customerName!);
       }
 
       // Add the transaction
       await addTransaction(
-        customerId,
+        customer.id,
         parsedData.amount!,
         parsedData.description || '',
         parsedData.type || 'debt'
@@ -261,7 +247,7 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
       toast.success(`${parsedData.type === 'debt' ? 'Debt' : 'Payment'} added successfully!`);
       resetModal();
       onClose();
-      navigate(`/customer/${customerId}`);
+      navigate(`/customer/${customer.id}`);
       
     } catch (error) {
       console.error('Error processing voice transaction:', error);
