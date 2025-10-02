@@ -103,8 +103,9 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
     console.log('Original text:', text);
     const lowerText = text.toLowerCase().trim();
     
-    // First, try to translate Telugu to English for better processing
-    const translatedText = translateTeluguToEnglish(text);
+    // First, convert Telugu numbers to digits, then translate to English
+    const numbersConverted = convertTeluguNumbersToDigits(text);
+    const translatedText = translateTeluguToEnglish(numbersConverted);
     console.log('Translated text:', translatedText);
     
     // Extract customer name - Telugu patterns and English patterns
@@ -126,8 +127,8 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
     // Extract amount - Telugu and English patterns
     let amount = 0;
     
-    // Simple number extraction
-    const numberMatch = text.match(/(\d+(?:\.\d{1,2})?)/);
+    // Extract from both original and translated text
+    const numberMatch = numbersConverted.match(/(\d+(?:\.\d{1,2})?)/);
     if (numberMatch) {
       amount = parseFloat(numberMatch[1]);
     }
@@ -174,6 +175,83 @@ const VoiceTransactionModal: React.FC<VoiceTransactionModalProps> = ({ isOpen, o
     } else {
       console.log('Invalid transaction - missing customer name or amount');
     }
+  };
+
+  const convertTeluguNumbersToDigits = (text: string): string => {
+    // Telugu number words to digits mapping
+    const teluguNumbers: { [key: string]: string } = {
+      // Basic numbers
+      'ఒకటి': '1',
+      'రెండు': '2', 
+      'మూడు': '3',
+      'నాలుగు': '4',
+      'అయిదు': '5',
+      'ఆరు': '6',
+      'ఏడు': '7',
+      'ఎనిమిది': '8',
+      'తొమ్మిది': '9',
+      'పది': '10',
+      
+      // Teens
+      'పదకొండు': '11',
+      'పన్నెండు': '12',
+      'పదమూడు': '13',
+      'పద్నాలుగు': '14',
+      'పదిహేను': '15',
+      'పదహారు': '16',
+      'పదిహేడు': '17',
+      'పద్దెనిమిది': '18',
+      'పందొమ్మిది': '19',
+      
+      // Tens
+      'ఇరవై': '20',
+      'ముప్పై': '30',
+      'నలభై': '40',
+      'యాభై': '50',
+      'అరవై': '60',
+      'డెబ్బై': '70',
+      'ఎనభై': '80',
+      'తొంభై': '90',
+      
+      // Hundreds
+      'వంద': '100',
+      'రెండువందలు': '200',
+      'మూడువందలు': '300',
+      'నాలుగువందలు': '400',
+      'అయిదువందలు': '500',
+      'ఆరువందలు': '600',
+      'ఏడువందలు': '700',
+      'ఎనిమిదివందలు': '800',
+      'తొమ్మిదివందలు': '900',
+      
+      // Thousands
+      'వేయి': '1000',
+      'రెండువేలు': '2000',
+      'మూడువేలు': '3000',
+      'నాలుగువేలు': '4000',
+      'అయిదువేలు': '5000',
+      
+      // Common combinations
+      'రెండువందల': '200',
+      'మూడువందల': '300',
+      'నాలుగువందల': '400',
+      'అయిదువందల': '500',
+      'ఆరువందల': '600',
+      'ఏడువందల': '700',
+      'ఎనిమిదివందల': '800',
+      'తొమ్మిదివందల': '900'
+    };
+
+    let convertedText = text;
+    
+    // Replace Telugu number words with digits
+    Object.entries(teluguNumbers).forEach(([telugu, digit]) => {
+      const regex = new RegExp(telugu, 'gi');
+      convertedText = convertedText.replace(regex, digit);
+    });
+    
+    console.log('Numbers converted:', text, '->', convertedText);
+    return convertedText;
   };
 
   const translateTeluguToEnglish = (text: string): string => {
