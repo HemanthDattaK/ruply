@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Clock, Trash2, UserX, PlusCircle, CreditCard as Edit, Phone, Printer, Share2 } from 'lucide-react';
+import { Clock, Trash2, UserX, PlusCircle, CreditCard as Edit, Phone, Printer, Share2, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 import Header from '../components/Header';
 import TransactionItem from '../components/TransactionItem';
@@ -195,6 +195,58 @@ const CustomerProfile: React.FC = () => {
     window.open(whatsappUrl, '_blank');
   };
 
+  const handleSendBillToWhatsApp = () => {
+    if (!customer?.phone) {
+      alert('No phone number saved for this customer. Please add a phone number first.');
+      return;
+    }
+
+    const amount = Math.abs(customer.totalDebt);
+    const status = customer.totalDebt > 0 ? 'Amount Due' : 'Fully Paid';
+    const currentDate = new Date().toLocaleDateString('en-IN');
+    const currentTime = new Date().toLocaleTimeString('en-IN', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+
+    // Create detailed bill message
+    const billMessage = `🧾 *BILL FROM KV SATYANARAYANA*
+
+📋 *Customer Details:*
+Name: ${customer.name}
+Phone: ${customer.phone}
+Date: ${currentDate}
+Time: ${currentTime}
+
+💰 *Bill Summary:*
+Total Amount: ₹${amount.toLocaleString()}
+Status: ${status}
+
+${transactions.length > 0 ? `📝 *Recent Transactions:*
+${transactions.slice(0, 5).map((t, index) => {
+  const date = new Date(t.date).toLocaleDateString('en-IN');
+  const type = t.type === 'debt' ? '🔴 Debt' : '🟢 Payment';
+  return `${index + 1}. ${type}: ₹${t.amount} - ${t.items || 'No description'} (${date})`;
+}).join('\n')}
+${transactions.length > 5 ? `\n... and ${transactions.length - 5} more transactions` : ''}
+
+` : ''}🙏 *Thank you for your business!*
+
+For any queries, please contact KV Satyanarayana.`;
+
+    // Clean phone number (remove spaces, dashes, etc.)
+    let cleanPhone = customer.phone.replace(/\D/g, '');
+    
+    // Add country code if not present
+    if (cleanPhone.length === 10 && !cleanPhone.startsWith('91')) {
+      cleanPhone = '91' + cleanPhone;
+    }
+
+    // Create WhatsApp URL with specific phone number
+    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(billMessage)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
   if (!customer) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#0F172A] to-[#1E293B] text-white">
@@ -296,7 +348,19 @@ const CustomerProfile: React.FC = () => {
                   <PlusCircle size={20} className="mr-3" />
                   Add New Transaction
                 </button>
-                <div className="grid grid-cols-2 gap-3">
+                
+                {/* WhatsApp Bill Button - Only show if phone number exists */}
+                {customer.phone && (
+                  <button
+                    onClick={handleSendBillToWhatsApp}
+                    className="w-full bg-green-500/20 hover:bg-green-500/30 text-green-400 py-3 px-4 rounded-xl transition-colors flex items-center justify-center font-medium"
+                  >
+                    <MessageCircle size={20} className="mr-3" />
+                    Send Bill to WhatsApp
+                  </button>
+                )}
+                
+                <div className="grid grid-cols-3 gap-3">
                   <button
                     onClick={handlePrint}
                     className="bg-gray-500/20 hover:bg-gray-500/30 text-gray-400 py-3 px-4 rounded-xl transition-colors flex items-center justify-center font-medium"
@@ -310,6 +374,15 @@ const CustomerProfile: React.FC = () => {
                   >
                     <Share2 size={18} className="mr-2" />
                     Share
+                  </button>
+                  <button
+                    onClick={handleSendBillToWhatsApp}
+                    className="bg-green-600/20 hover:bg-green-600/30 text-green-300 py-3 px-4 rounded-xl transition-colors flex items-center justify-center font-medium"
+                    disabled={!customer.phone}
+                    title={!customer.phone ? "Add phone number to send bill" : "Send bill via WhatsApp"}
+                  >
+                    <MessageCircle size={18} className="mr-2" />
+                    WhatsApp
                   </button>
                 </div>
               </div>
