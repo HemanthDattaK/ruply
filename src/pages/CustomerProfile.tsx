@@ -349,17 +349,6 @@ For any queries, please contact KV Satyanarayana.`;
                   Add New Transaction
                 </button>
                 
-                {/* WhatsApp Bill Button - Only show if phone number exists */}
-                {customer.phone && (
-                  <button
-                    onClick={handleSendBillToWhatsApp}
-                    className="w-full bg-green-500/20 hover:bg-green-500/30 text-green-400 py-3 px-4 rounded-xl transition-colors flex items-center justify-center font-medium"
-                  >
-                    <MessageCircle size={20} className="mr-3" />
-                    Send Bill to WhatsApp
-                  </button>
-                )}
-                
                 <div className="grid grid-cols-3 gap-3">
                   <button
                     onClick={handlePrint}
@@ -375,6 +364,24 @@ For any queries, please contact KV Satyanarayana.`;
                     <Share2 size={18} className="mr-2" />
                     Share
                   </button>
+                  {customer.phone ? (
+                    <button
+                      onClick={handleSendBillToWhatsApp}
+                      className="bg-green-500/20 hover:bg-green-500/30 text-green-400 py-3 px-4 rounded-xl transition-colors flex items-center justify-center font-medium"
+                    >
+                      <MessageCircle size={18} className="mr-2" />
+                      WhatsApp
+                    </button>
+                  ) : (
+                    <button
+                      disabled
+                      className="bg-gray-500/10 text-gray-500 py-3 px-4 rounded-xl transition-colors flex items-center justify-center font-medium cursor-not-allowed"
+                      title="No phone number saved"
+                    >
+                      <MessageCircle size={18} className="mr-2" />
+                      WhatsApp
+                    </button>
+                  )}
                 </div>
               </div>
             </>
