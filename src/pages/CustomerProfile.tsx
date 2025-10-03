@@ -208,7 +208,7 @@ const CustomerProfile: React.FC = () => {
     // Create polite bill message with emojis
     const billMessage = `🏪 *KV Satyanarayana*
 
-Dear ${customer.name},
+Respected Customer,
 
 Your bill details:
 💰 *Total Amount: ₹${amount.toLocaleString()}*
@@ -216,7 +216,7 @@ Your bill details:
 
 ${status === 'Amount Due' ? '⚠️ Payment pending' : '✅ Payment completed'}
 
-Thank you for your business! 🙏`;
+Thank you 🙏`;
 
     // Clean phone number (remove spaces, dashes, etc.)
     let cleanPhone = customer.phone.replace(/\D/g, '');
