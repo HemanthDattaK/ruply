@@ -205,7 +205,6 @@ const CustomerProfile: React.FC = () => {
     const status = customer.totalDebt > 0 ? 'Amount Due' : 'Fully Paid';
     const currentDate = new Date().toLocaleDateString();
 
-    // Create polite bill message with emojis
     const billMessage = `🏪 *KV Satyanarayana*
 
 Respected Customer,
@@ -218,16 +217,14 @@ ${status === 'Amount Due' ? '⚠️ Payment pending' : '✅ Payment completed'}
 
 Thank you 🙏`;
 
-    // Clean phone number (remove spaces, dashes, etc.)
     let cleanPhone = customer.phone.replace(/\D/g, '');
     
-    // Add country code if not present
     if (cleanPhone.length === 10 && !cleanPhone.startsWith('91')) {
       cleanPhone = '91' + cleanPhone;
     }
 
-    // Use WhatsApp web URL that works better for new contacts
-    const whatsappUrl = `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(billMessage)}`;
+    // Use the universal wa.me link which works on both mobile and desktop
+    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(billMessage)}`;
     window.open(whatsappUrl, '_blank');
   };
 
