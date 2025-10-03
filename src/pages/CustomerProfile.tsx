@@ -205,18 +205,18 @@ const CustomerProfile: React.FC = () => {
     const status = customer.totalDebt > 0 ? 'Amount Due' : 'Fully Paid';
     const currentDate = new Date().toLocaleDateString();
 
-    // Create simple bill message for illiterate customers
-    const billMessage = `KV Satyanarayana
+    // Create polite bill message with emojis
+    const billMessage = `🏪 *KV Satyanarayana*
 
-${customer.name}
-${customer.phone}
+Dear ${customer.name},
 
-Total Bill: Rs ${amount}
-${status === 'Amount Due' ? 'Paisa Dena Hai' : 'Paisa Mil Gaya'}
+Your bill details:
+💰 *Total Amount: ₹${amount.toLocaleString()}*
+📅 Date: ${currentDate}
 
-Date: ${currentDate}
+${status === 'Amount Due' ? '⚠️ Payment pending' : '✅ Payment completed'}
 
-Thank You`;
+Thank you for your business! 🙏`;
 
     // Clean phone number (remove spaces, dashes, etc.)
     let cleanPhone = customer.phone.replace(/\D/g, '');
@@ -226,8 +226,8 @@ Thank You`;
       cleanPhone = '91' + cleanPhone;
     }
 
-    // Use WhatsApp API URL that works better for new chats
-    const whatsappUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(billMessage)}`;
+    // Use WhatsApp web URL that works better for new contacts
+    const whatsappUrl = `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(billMessage)}`;
     window.open(whatsappUrl, '_blank');
   };
 
