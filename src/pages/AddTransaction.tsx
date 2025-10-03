@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 import { CreditCard, TrendingUp, TrendingDown } from 'lucide-react';
 import Header from '../components/Header';
 import InputWithVoice from '../components/InputWithVoice';
@@ -36,9 +37,12 @@ const AddTransaction: React.FC = () => {
           items,
           transactionType
         );
+        // Show success message
+        toast.success(`${transactionType === 'debt' ? 'Debt' : 'Payment'} added successfully!`);
         navigate(`/customer/${selectedCustomerId}`);
       } catch (error) {
         console.error('Error adding transaction:', error);
+        toast.error('Failed to add transaction. Please try again.');
       } finally {
         setLoading(false);
       }

@@ -287,29 +287,31 @@ const CustomerProfile: React.FC = () => {
                 </button>
               </div>
               
-              {/* Action Buttons */}
-              <div className="flex space-x-3 mt-4">
+              {/* Action Buttons - Vertical Layout */}
+              <div className="space-y-3 mt-4">
                 <button
                   onClick={() => navigate(`/add-transaction/${customerId}`)}
-                  className="flex-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 py-2 px-4 rounded-xl transition-colors flex items-center justify-center"
+                  className="w-full bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 py-3 px-4 rounded-xl transition-colors flex items-center justify-center font-medium"
                 >
-                  <PlusCircle size={18} className="mr-2" />
-                  Add Transaction
+                  <PlusCircle size={20} className="mr-3" />
+                  Add New Transaction
                 </button>
-                <button
-                  onClick={handlePrint}
-                  className="flex-1 bg-gray-500/20 hover:bg-gray-500/30 text-gray-400 py-2 px-4 rounded-xl transition-colors flex items-center justify-center"
-                >
-                  <Printer size={18} className="mr-2" />
-                  Print
-                </button>
-                <button
-                  onClick={handleShare}
-                  className="flex-1 bg-green-500/20 hover:bg-green-500/30 text-green-400 py-2 px-4 rounded-xl transition-colors flex items-center justify-center"
-                >
-                  <Share2 size={18} className="mr-2" />
-                  Share
-                </button>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={handlePrint}
+                    className="bg-gray-500/20 hover:bg-gray-500/30 text-gray-400 py-3 px-4 rounded-xl transition-colors flex items-center justify-center font-medium"
+                  >
+                    <Printer size={18} className="mr-2" />
+                    Print
+                  </button>
+                  <button
+                    onClick={handleShare}
+                    className="bg-green-500/20 hover:bg-green-500/30 text-green-400 py-3 px-4 rounded-xl transition-colors flex items-center justify-center font-medium"
+                  >
+                    <Share2 size={18} className="mr-2" />
+                    Share
+                  </button>
+                </div>
               </div>
             </>
           )}
