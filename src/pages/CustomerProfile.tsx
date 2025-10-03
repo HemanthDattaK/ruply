@@ -203,36 +203,20 @@ const CustomerProfile: React.FC = () => {
 
     const amount = Math.abs(customer.totalDebt);
     const status = customer.totalDebt > 0 ? 'Amount Due' : 'Fully Paid';
-    const currentDate = new Date().toLocaleDateString('en-IN');
-    const currentTime = new Date().toLocaleTimeString('en-IN', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
+    const currentDate = new Date().toLocaleDateString();
 
-    // Create detailed bill message
-    const billMessage = `🧾 *BILL FROM KV SATYANARAYANA*
+    // Create simple bill message for illiterate customers
+    const billMessage = `KV Satyanarayana
 
-📋 *Customer Details:*
-Name: ${customer.name}
-Phone: ${customer.phone}
+${customer.name}
+${customer.phone}
+
+Total Bill: Rs ${amount}
+${status === 'Amount Due' ? 'Paisa Dena Hai' : 'Paisa Mil Gaya'}
+
 Date: ${currentDate}
-Time: ${currentTime}
 
-💰 *Bill Summary:*
-Total Amount: ₹${amount.toLocaleString()}
-Status: ${status}
-
-${transactions.length > 0 ? `📝 *Recent Transactions:*
-${transactions.slice(0, 5).map((t, index) => {
-  const date = new Date(t.date).toLocaleDateString('en-IN');
-  const type = t.type === 'debt' ? '🔴 Debt' : '🟢 Payment';
-  return `${index + 1}. ${type}: ₹${t.amount} - ${t.items || 'No description'} (${date})`;
-}).join('\n')}
-${transactions.length > 5 ? `\n... and ${transactions.length - 5} more transactions` : ''}
-
-` : ''}🙏 *Thank you for your business!*
-
-For any queries, please contact KV Satyanarayana.`;
+Thank You`;
 
     // Clean phone number (remove spaces, dashes, etc.)
     let cleanPhone = customer.phone.replace(/\D/g, '');
@@ -242,8 +226,8 @@ For any queries, please contact KV Satyanarayana.`;
       cleanPhone = '91' + cleanPhone;
     }
 
-    // Create WhatsApp URL with specific phone number
-    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(billMessage)}`;
+    // Use WhatsApp API URL that works better for new chats
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(billMessage)}`;
     window.open(whatsappUrl, '_blank');
   };
 
