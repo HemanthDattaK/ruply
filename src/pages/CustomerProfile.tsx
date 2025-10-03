@@ -375,15 +375,6 @@ For any queries, please contact KV Satyanarayana.`;
                     <Share2 size={18} className="mr-2" />
                     Share
                   </button>
-                  <button
-                    onClick={handleSendBillToWhatsApp}
-                    className="bg-green-600/20 hover:bg-green-600/30 text-green-300 py-3 px-4 rounded-xl transition-colors flex items-center justify-center font-medium"
-                    disabled={!customer.phone}
-                    title={!customer.phone ? "Add phone number to send bill" : "Send bill via WhatsApp"}
-                  >
-                    <MessageCircle size={18} className="mr-2" />
-                    WhatsApp
-                  </button>
                 </div>
               </div>
             </>
