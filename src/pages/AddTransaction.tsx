@@ -42,33 +42,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         // 2. Show an immediate success message
         toast.success(`${transactionType === 'debt' ? 'Debt' : 'Payment'} added successfully!`);
 
-        // 3. Get customer details to check for a phone number
-        const customer = getCustomerById(selectedCustomerId);
-
-        // 4. If customer has a phone, prompt to send WhatsApp notification
-        if (customer && customer.phone) {
-          const wantsToSend = window.confirm(
-            'Do you want to send a WhatsApp notification to the customer?'
-          );
-
-          if (wantsToSend) {
-            const messageType = transactionType === 'debt' ? 'Debt Added' : 'Payment Received';
-            const description = items || (transactionType === 'debt' ? 'Items purchased' : 'Payment');
-            
-            const message = `Hello ${customer.name},\n\nA new transaction has been recorded:\n\n*${messageType}: ₹${parseFloat(amount).toLocaleString()}*\nDescription: ${description}\n\nThank you.\n- KV Satyanarayana`;
-
-            // Clean the phone number and add country code if needed
-            let cleanPhone = customer.phone.replace(/\D/g, '');
-            if (cleanPhone.length === 10 && !cleanPhone.startsWith('91')) {
-              cleanPhone = '91' + cleanPhone;
-            }
-
-            const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
-            window.open(whatsappUrl, '_blank');
-          }
-        }
-
-        // 5. Navigate back to the customer profile
+        // 3. Navigate back to the customer profile
         navigate(`/customer/${selectedCustomerId}`);
 
       } catch (error) {
