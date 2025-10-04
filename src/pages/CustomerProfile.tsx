@@ -205,7 +205,7 @@ const CustomerProfile: React.FC = () => {
     const status = customer.totalDebt > 0 ? 'Amount Due' : 'Fully Paid';
     const currentDate = new Date().toLocaleDateString();
 
-    const billMessage = `🏪 *KV Satyanarayana*
+    const billMessage = `🏪 *KV Satyanarayana Kirana,Kallakuru*
 
 Respected Customer,
 
