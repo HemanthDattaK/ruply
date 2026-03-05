@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import toast from 'react-hot-toast';
-import { CreditCard, TrendingUp, TrendingDown } from 'lucide-react';
+import { CreditCard, TrendingUp, TrendingDown, User, Package, IndianRupee } from 'lucide-react';
 import Header from '../components/Header';
-import InputWithVoice from '../components/InputWithVoice';
-import Button from '../components/ui/Button';
+import Toast from '../components/Toast';
 import { useAppContext } from '../context/AppContext';
 
 const AddTransaction: React.FC = () => {
@@ -15,8 +13,14 @@ const AddTransaction: React.FC = () => {
   const [items, setItems] = useState('');
   const [transactionType, setTransactionType] = useState<'debt' | 'payment'>('debt');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ customer?: string; amount?: string }>({});
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+    show: false,
+    message: '',
+    type: 'success'
+  });
   
-const { customers, addTransaction, getCustomerById } = useAppContext();
+  const { customers, addTransaction } = useAppContext();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,126 +29,163 @@ const { customers, addTransaction, getCustomerById } = useAppContext();
     }
   }, [customerId]);
 
-const handleSubmit = async (e: React.FormEvent) => {
+  const validateForm = () => {
+    const newErrors: { customer?: string; amount?: string } = {};
+    
+    if (!selectedCustomerId) {
+      newErrors.customer = 'Please select a customer';
+    }
+    
+    if (!amount || parseFloat(amount) <= 0) {
+      newErrors.amount = 'Please enter a valid amount';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (selectedCustomerId && amount) {
-      setLoading(true);
-      try {
-        // 1. Save the transaction
-        await addTransaction(
-          selectedCustomerId,
-          parseFloat(amount),
-          items,
-          transactionType
-        );
+    if (!validateForm()) {
+      return;
+    }
 
-        // 2. Show an immediate success message
-        toast.success(`${transactionType === 'debt' ? 'Debt' : 'Payment'} added successfully!`);
+    setLoading(true);
+    try {
+      await addTransaction(
+        selectedCustomerId,
+        parseFloat(amount),
+        items,
+        transactionType
+      );
 
-        // 3. Navigate back to the customer profile
+      setToast({
+        show: true,
+        message: `${transactionType === 'debt' ? 'Debt' : 'Payment'} added successfully!`,
+        type: 'success'
+      });
+
+      setTimeout(() => {
         navigate(`/customer/${selectedCustomerId}`);
+      }, 1000);
 
-      } catch (error) {
-        console.error('Error adding transaction:', error);
-        toast.error('Failed to add transaction. Please try again.');
-      } finally {
-        setLoading(false);
-      }
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+      setToast({
+        show: true,
+        message: 'Failed to add transaction. Please try again.',
+        type: 'error'
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header title="Add New Transaction" showBack={true} />
+    <div className="min-h-screen bg-gradient-to-b from-bg-start to-bg-end">
+      <Header title="Add Transaction" showBack={true} />
 
-      <div className="max-w-md mx-auto px-4 py-6">
+      <div className="max-w-mobile mx-auto px-4 py-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+          transition={{ duration: 0.4, ease: [0.2, 0.9, 0.3, 1] }}
+          className="premium-card p-6"
         >
           {customers.length === 0 ? (
             <div className="text-center py-8">
-              <div className="p-4 bg-gray-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                <CreditCard className="w-8 h-8 text-gray-500" />
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CreditCard className="w-8 h-8 text-text-muted" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                No Customers Found
-              </h3>
-              <p className="text-gray-600 mb-6">
+              <h3 className="text-h2 mb-2">No Customers Found</h3>
+              <p className="text-body text-text-secondary mb-6">
                 You need to add a customer first before creating transactions.
               </p>
-              <Button
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+              <motion.button
+                whileTap={{ scale: 0.98 }}
                 onClick={() => navigate('/add-customer')}
+                className="btn-primary"
               >
                 Add Customer
-              </Button>
+              </motion.button>
             </div>
           ) : (
             <>
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  Record Transaction
-                </h2>
-                <p className="text-gray-600">
-                  {selectedCustomer ? `Adding transaction for ${selectedCustomer.name}` : 'Add a new debt or payment transaction.'}
+                <h2 className="text-h1 mb-2">Record Transaction</h2>
+                <p className="text-body text-text-secondary">
+                  {selectedCustomer 
+                    ? `Adding transaction for ${selectedCustomer.name}` 
+                    : 'Add a new debt or payment transaction.'
+                  }
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit}>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Customer Selection */}
                 {!customerId && (
-                  <div className="mb-6">
-                    <label htmlFor="customer" className="block text-sm font-medium text-gray-900 mb-2">
-                      Customer <span className="text-red-500">*</span>
+                  <div>
+                    <label htmlFor="customer" className="block text-body font-medium text-text-primary mb-2">
+                      Customer <span className="text-danger">*</span>
                     </label>
-                    <select
-                      id="customer"
-                      value={selectedCustomerId}
-                      onChange={(e) => setSelectedCustomerId(e.target.value)}
-                      className="w-full px-4 py-4 bg-white border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                      required
-                    >
-                      <option value="">Select Customer</option>
-                      {customers.map((customer) => (
-                        <option key={customer.id} value={customer.id}>
-                          {customer.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-text-secondary h-5 w-5" />
+                      <select
+                        id="customer"
+                        value={selectedCustomerId}
+                        onChange={(e) => {
+                          setSelectedCustomerId(e.target.value);
+                          if (errors.customer) setErrors({ ...errors, customer: undefined });
+                        }}
+                        className={`w-full pl-12 pr-4 py-4 bg-surface border rounded-card text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-1 focus:border-transparent transition-all appearance-none ${
+                          errors.customer ? 'border-danger error-shake' : 'border-gray-200'
+                        }`}
+                        required
+                      >
+                        <option value="">Select Customer</option>
+                        {customers.map((customer) => (
+                          <option key={customer.id} value={customer.id}>
+                            {customer.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {errors.customer && (
+                      <p className="text-small text-danger mt-1">{errors.customer}</p>
+                    )}
                   </div>
                 )}
 
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-900 mb-3">
-                    Transaction Type <span className="text-red-500">*</span>
+                {/* Transaction Type */}
+                <div>
+                  <label className="block text-body font-medium text-text-primary mb-3">
+                    Transaction Type <span className="text-danger">*</span>
                   </label>
                   <div className="grid grid-cols-2 gap-3">
                     <motion.button
                       type="button"
                       whileTap={{ scale: 0.98 }}
-                      className={`p-4 rounded-xl border-2 transition-all ${
+                      className={`p-4 rounded-card border-2 transition-all ${
                         transactionType === 'debt'
-                          ? 'border-red-300 bg-red-50'
-                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                          ? 'border-danger bg-red-50'
+                          : 'border-gray-200 hover:border-gray-300 bg-surface'
                       }`}
                       onClick={() => setTransactionType('debt')}
                     >
                       <TrendingUp className={`w-6 h-6 mx-auto mb-2 ${
-                        transactionType === 'debt' ? 'text-red-600' : 'text-gray-500'
+                        transactionType === 'debt' ? 'text-danger' : 'text-text-muted'
                       }`} />
                       <div className={`font-medium ${
                         transactionType === 'debt' 
-                          ? 'text-red-600' 
-                          : 'text-gray-900'
+                          ? 'text-danger' 
+                          : 'text-text-primary'
                       }`}>
                         Debt
                       </div>
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="text-small text-text-secondary mt-1">
                         Money owed
                       </div>
                     </motion.button>
@@ -152,74 +193,118 @@ const handleSubmit = async (e: React.FormEvent) => {
                     <motion.button
                       type="button"
                       whileTap={{ scale: 0.98 }}
-                      className={`p-4 rounded-xl border-2 transition-all ${
+                      className={`p-4 rounded-card border-2 transition-all ${
                         transactionType === 'payment'
-                          ? 'border-green-300 bg-green-50'
-                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                          ? 'border-success bg-green-50'
+                          : 'border-gray-200 hover:border-gray-300 bg-surface'
                       }`}
                       onClick={() => setTransactionType('payment')}
                     >
                       <TrendingDown className={`w-6 h-6 mx-auto mb-2 ${
-                        transactionType === 'payment' ? 'text-green-600' : 'text-gray-500'
+                        transactionType === 'payment' ? 'text-success' : 'text-text-muted'
                       }`} />
                       <div className={`font-medium ${
                         transactionType === 'payment' 
-                          ? 'text-green-600' 
-                          : 'text-gray-900'
+                          ? 'text-success' 
+                          : 'text-text-primary'
                       }`}>
                         Payment
                       </div>
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="text-small text-text-secondary mt-1">
                         Money received
                       </div>
                     </motion.button>
                   </div>
                 </div>
 
-                <InputWithVoice
-                  id="amount"
-                  label="Amount (₹)"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="0.00"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  required
-                />
+                {/* Amount */}
+                <div>
+                  <label htmlFor="amount" className="block text-body font-medium text-text-primary mb-2">
+                    Amount <span className="text-danger">*</span>
+                  </label>
+                  <div className="relative">
+                    <IndianRupee className="absolute left-4 top-1/2 transform -translate-y-1/2 text-text-secondary h-5 w-5" />
+                    <input
+                      id="amount"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={amount}
+                      onChange={(e) => {
+                        setAmount(e.target.value);
+                        if (errors.amount) setErrors({ ...errors, amount: undefined });
+                      }}
+                      placeholder="0.00"
+                      className={`w-full pl-12 pr-4 py-4 bg-surface border rounded-card text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-primary-1 focus:border-transparent transition-all ${
+                        errors.amount ? 'border-danger error-shake' : 'border-gray-200'
+                      }`}
+                      required
+                    />
+                  </div>
+                  {errors.amount && (
+                    <p className="text-small text-danger mt-1">{errors.amount}</p>
+                  )}
+                </div>
 
-                <InputWithVoice
-                  id="items"
-                  label={transactionType === 'debt' ? "Items/Description" : "Payment Details"}
-                  value={items}
-                  onChange={(e) => setItems(e.target.value)}
-                  placeholder={transactionType === 'debt' ? "What was purchased?" : "Payment method or notes (optional)"}
-                  multiline
-                />
+                {/* Items/Description */}
+                <div>
+                  <label htmlFor="items" className="block text-body font-medium text-text-primary mb-2">
+                    {transactionType === 'debt' ? "Items/Description" : "Payment Details"}
+                  </label>
+                  <div className="relative">
+                    <Package className="absolute left-4 top-4 text-text-secondary h-5 w-5" />
+                    <textarea
+                      id="items"
+                      value={items}
+                      onChange={(e) => setItems(e.target.value)}
+                      placeholder={transactionType === 'debt' 
+                        ? "Item name, e.g., Rice 10kg" 
+                        : "Payment method or notes (optional)"
+                      }
+                      className="w-full pl-12 pr-4 py-4 bg-surface border border-gray-200 rounded-card text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-primary-1 focus:border-transparent transition-all resize-none"
+                      rows={3}
+                    />
+                  </div>
+                </div>
 
-                <div className="flex space-x-4">
-                  <Button
+                {/* Action Buttons */}
+                <div className="flex space-x-4 pt-4">
+                  <motion.button
                     type="button"
-                    variant="secondary"
-                    className="flex-1"
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => navigate(-1)}
+                    className="flex-1 py-4 px-6 border border-gray-200 rounded-card text-text-primary font-medium hover:bg-gray-50 transition-colors"
                   >
                     Cancel
-                  </Button>
-                  <Button
+                  </motion.button>
+                  <motion.button
                     type="submit"
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                    loading={loading}
-                    disabled={!selectedCustomerId || !amount}
+                    whileTap={{ scale: 0.98 }}
+                    disabled={loading || !selectedCustomerId || !amount}
+                    className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Save Transaction
-                  </Button>
+                    {loading ? (
+                      <div className="flex items-center justify-center">
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin-loader mr-2" />
+                        Saving...
+                      </div>
+                    ) : (
+                      'Save Transaction'
+                    )}
+                  </motion.button>
                 </div>
               </form>
             </>
           )}
         </motion.div>
       </div>
+
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.show}
+        onClose={() => setToast({ ...toast, show: false })}
+      />
     </div>
   );
 };

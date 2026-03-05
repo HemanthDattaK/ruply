@@ -1,12 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Clock, Trash2, UserX, PlusCircle, CreditCard as Edit, Phone, Printer, Share2, MessageCircle } from 'lucide-react';
-import { useState } from 'react';
+import { Clock, Trash2, UserX, PlusCircle, Edit3, Phone, Printer, Share2, MessageCircle, MoreVertical } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../components/Header';
 import TransactionItem from '../components/TransactionItem';
+import Toast from '../components/Toast';
 import { useAppContext } from '../context/AppContext';
-import FloatingActionButton from '../components/FloatingActionButton';
-import Button from '../components/ui/Button';
 
 const CustomerProfile: React.FC = () => {
   const { customerId } = useParams<{ customerId: string }>();
@@ -15,6 +14,12 @@ const CustomerProfile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
+  const [showActions, setShowActions] = useState(false);
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+    show: false,
+    message: '',
+    type: 'success'
+  });
 
   const customer = getCustomerById(customerId || '');
   const transactions = getCustomerTransactions(customerId || '');
@@ -26,29 +31,75 @@ const CustomerProfile: React.FC = () => {
     }
   }, [customer]);
 
+  // Calculate amounts
+  const totalDebt = transactions
+    .filter(t => t.type === 'debt')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const totalPaid = transactions
+    .filter(t => t.type === 'payment')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const remainingDue = totalDebt - totalPaid;
+  const paymentProgress = totalDebt > 0 ? (totalPaid / totalDebt) * 100 : 0;
+
   const handleDeleteAll = async () => {
-    if (window.confirm('Are you sure you want to delete all transactions? This cannot be undone.')) {
-      await deleteAllTransactions(customerId || '');
+    if (window.confirm('Delete all transactions? This cannot be undone.')) {
+      try {
+        await deleteAllTransactions(customerId || '');
+        setToast({
+          show: true,
+          message: 'All transactions deleted',
+          type: 'success'
+        });
+      } catch (error) {
+        setToast({
+          show: true,
+          message: 'Failed to delete transactions',
+          type: 'error'
+        });
+      }
     }
   };
 
   const handleDeleteCustomer = async () => {
-    if (window.confirm('Are you sure you want to delete this customer? This will delete all their transactions and cannot be undone.')) {
-      await deleteCustomer(customerId || '');
-      navigate('/');
+    if (window.confirm('Delete customer? This will delete all their transactions and cannot be undone.')) {
+      try {
+        await deleteCustomer(customerId || '');
+        navigate('/');
+      } catch (error) {
+        setToast({
+          show: true,
+          message: 'Failed to delete customer',
+          type: 'error'
+        });
+      }
     }
   };
 
   const handleSaveEdit = async () => {
     if (editName.trim()) {
-      await updateCustomer(customerId || '', editName.trim(), editPhone.trim() || undefined);
-      setIsEditing(false);
+      try {
+        await updateCustomer(customerId || '', editName.trim(), editPhone.trim() || undefined);
+        setIsEditing(false);
+        setToast({
+          show: true,
+          message: 'Customer updated successfully',
+          type: 'success'
+        });
+      } catch (error) {
+        setToast({
+          show: true,
+          message: 'Failed to update customer',
+          type: 'error'
+        });
+      }
     }
   };
 
   const handlePrint = () => {
-    const amount = customer ? Math.abs(customer.totalDebt) : 0;
-    const status = customer && customer.totalDebt > 0 ? 'Amount Due' : 'Fully Paid';
+    const amount = Math.abs(remainingDue);
+    const status = remainingDue > 0 ? 'Amount Due' : 'Fully Paid';
     const printContent = `
       <!DOCTYPE html>
       <html>
@@ -74,11 +125,6 @@ const CustomerProfile: React.FC = () => {
               font-size: 26px; 
               color: #000; 
             }
-            .header h2 { 
-              margin: 8px 0 0 0; 
-              font-size: 15px; 
-              color: #444; 
-            }
             .customer-info { 
               margin-bottom: 20px; 
               padding: 14px;
@@ -88,7 +134,7 @@ const CustomerProfile: React.FC = () => {
             .amount { 
               font-size: 28px; 
               font-weight: bold; 
-              color: ${customer && customer.totalDebt > 0 ? '#c00' : '#0a0'}; 
+              color: ${remainingDue > 0 ? '#c00' : '#0a0'}; 
               text-align: center;
               margin: 16px 0;
             }
@@ -99,28 +145,6 @@ const CustomerProfile: React.FC = () => {
               padding: 6px 0;
               border-bottom: 1px dotted #ccc;
             }
-            .label { 
-              font-weight: bold; 
-              color: #333;
-            }
-            .value {
-              color: #666;
-            }
-            .footer {
-              text-align: center;
-              margin-top: 30px;
-              padding-top: 12px;
-              border-top: 1px solid #ddd;
-              color: #888;
-              font-size: 12px;
-            }
-
-            /* print-friendly adjustments */
-            @media print {
-              body { margin: 10mm; }
-              .header { border-bottom-width: 1px; }
-              .customer-info { border: none; }
-            }
           </style>
         </head>
         <body>
@@ -130,30 +154,23 @@ const CustomerProfile: React.FC = () => {
           </div>
           <div class="customer-info">
             <div class="info-row">
-              <span class="label">Customer Name:</span> 
-              <span class="value">${customer?.name ?? ''}</span>
+              <span>Customer Name:</span> 
+              <span>${customer?.name ?? ''}</span>
             </div>
             ${customer?.phone ? `
             <div class="info-row">
-              <span class="label">Phone:</span> 
-              <span class="value">${customer.phone}</span>
+              <span>Phone:</span> 
+              <span>${customer.phone}</span>
             </div>` : ''}
             <div class="info-row">
-              <span class="label">Date:</span> 
-              <span class="value">${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</span>
+              <span>Date:</span> 
+              <span>${new Date().toLocaleDateString()}</span>
             </div>
             <div class="info-row">
-              <span class="label">Status:</span> 
-              <span class="value">${status}</span>
+              <span>Status:</span> 
+              <span>${status}</span>
             </div>
             <div class="amount">₹${amount.toLocaleString()}</div>
-            <div class="info-row" style="border-bottom:none;">
-              <span class="label">Total Bill:</span>
-              <span class="value">₹${amount.toLocaleString()}</span>
-            </div>
-          </div>
-          <div class="footer">
-            <p>Thank you</p>
           </div>
         </body>
       </html>
@@ -163,7 +180,6 @@ const CustomerProfile: React.FC = () => {
     if (printWindow) {
       printWindow.document.write(printContent);
       printWindow.document.close();
-      // Wait a bit for content to render then print (some browsers need it)
       setTimeout(() => {
         printWindow.focus();
         printWindow.print();
@@ -172,11 +188,10 @@ const CustomerProfile: React.FC = () => {
   };
 
   const handleShare = async () => {
-    const amount = customer ? Math.abs(customer.totalDebt) : 0;
-    const status = customer && customer.totalDebt > 0 ? 'Amount Due' : 'Fully Paid';
-    const message = `📋 KV Satyanarayana\n\nCustomer: ${customer?.name ?? ''}\n${customer?.phone ? `Phone: ${customer.phone}\n` : ''}Total Bill: ₹${amount.toLocaleString()}\nStatus: ${status}\nDate: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}\n\nThank you`;
+    const amount = Math.abs(remainingDue);
+    const status = remainingDue > 0 ? 'Amount Due' : 'Fully Paid';
+    const message = `📋 KV Satyanarayana\n\nCustomer: ${customer?.name ?? ''}\n${customer?.phone ? `Phone: ${customer.phone}\n` : ''}Total Bill: ₹${amount.toLocaleString()}\nStatus: ${status}\nDate: ${new Date().toLocaleDateString()}\n\nThank you`;
 
-    // Try native share first
     if (navigator.share) {
       try {
         await navigator.share({
@@ -185,181 +200,251 @@ const CustomerProfile: React.FC = () => {
         });
         return;
       } catch (error) {
-        // fallback below
         console.log('Native share failed, falling back to WhatsApp', error);
       }
     }
 
-    // Fallback to WhatsApp web
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
 
   const handleSendBillToWhatsApp = () => {
     if (!customer?.phone) {
-      alert('No phone number saved for this customer. Please add a phone number first.');
+      setToast({
+        show: true,
+        message: 'No phone number saved for this customer',
+        type: 'error'
+      });
       return;
     }
 
-    const amount = Math.abs(customer.totalDebt);
-    const status = customer.totalDebt > 0 ? 'Amount Due' : 'Fully Paid';
-    const currentDate = new Date().toLocaleDateString();
-
-    const billMessage = `🏪 *KV Satyanarayana Kirana,Kallakuru*
-
-Respected Customer,
-
-Your bill details:
-💰 *Total Amount: ₹${amount.toLocaleString()}*
-📅 Date: ${currentDate}
-
-${status === 'Amount Due' ? '⚠️ Payment pending' : '✅ Payment completed'}
-
-Thank you 🙏`;
+    const amount = Math.abs(remainingDue);
+    const status = remainingDue > 0 ? 'Amount Due' : 'Fully Paid';
+    const billMessage = `🏪 *KV Satyanarayana Kirana, Kallakuru*\n\nRespected Customer,\n\nYour bill details:\n💰 *Total Amount: ₹${amount.toLocaleString()}*\n📅 Date: ${new Date().toLocaleDateString()}\n\n${status === 'Amount Due' ? '⚠️ Payment pending' : '✅ Payment completed'}\n\nThank you 🙏`;
 
     let cleanPhone = customer.phone.replace(/\D/g, '');
-    
     if (cleanPhone.length === 10 && !cleanPhone.startsWith('91')) {
       cleanPhone = '91' + cleanPhone;
     }
 
-    // Use the universal wa.me link which works on both mobile and desktop
     const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(billMessage)}`;
     window.open(whatsappUrl, '_blank');
   };
 
   if (!customer) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0F172A] to-[#1E293B] text-white">
+      <div className="min-h-screen bg-gradient-to-b from-bg-start to-bg-end">
         <Header title="Customer Not Found" showBack={true} />
-        <div className="p-4 text-center">
-          <p className="mb-4 text-gray-300">This customer doesn't exist or has been removed.</p>
-          <button 
-            onClick={() => navigate('/')}
-            className="bg-blue-500/20 text-white px-4 py-2 rounded-xl hover:bg-blue-500/30 transition-colors"
-          >
-            Back to Dashboard
-          </button>
+        <div className="max-w-mobile mx-auto px-4 py-6">
+          <div className="premium-card p-8 text-center">
+            <h3 className="text-h2 mb-2">Customer Not Found</h3>
+            <p className="text-body text-text-secondary mb-6">
+              This customer doesn't exist or has been removed.
+            </p>
+            <motion.button 
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate('/')}
+              className="btn-primary"
+            >
+              Back to Dashboard
+            </motion.button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0F172A] to-[#1E293B] text-white">
+    <div className="min-h-screen bg-gradient-to-b from-bg-start to-bg-end">
       <Header title={customer.name} showBack={true} />
 
-      <div className="p-4">
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-5">
+      <div className="max-w-mobile mx-auto px-4 pb-24">
+        {/* Customer Summary Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.2, 0.9, 0.3, 1] }}
+          className="premium-card p-6 mb-6"
+        >
           {isEditing ? (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-white mb-2">Customer Name</label>
+                <label className="block text-body font-medium text-text-primary mb-2">Customer Name</label>
                 <input
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-surface border border-gray-200 rounded-card text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-1 focus:border-transparent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-white mb-2">Phone Number (Optional)</label>
+                <label className="block text-body font-medium text-text-primary mb-2">Phone Number</label>
                 <input
                   type="tel"
                   value={editPhone}
                   onChange={(e) => setEditPhone(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-surface border border-gray-200 rounded-card text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-1 focus:border-transparent"
                 />
               </div>
               <div className="flex space-x-3">
-                <Button
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => setIsEditing(false)}
-                  className="flex-1 border border-white/20 text-white hover:bg-white/10"
+                  className="flex-1 py-3 px-4 border border-gray-200 rounded-card text-text-primary font-medium"
                 >
                   Cancel
-                </Button>
-                <Button
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
                   onClick={handleSaveEdit}
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white"
+                  className="flex-1 btn-primary"
                 >
                   Save
-                </Button>
+                </motion.button>
               </div>
             </div>
           ) : (
             <>
               <div className="flex justify-between items-start mb-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <h2 className="text-xl font-bold text-white">{customer.name}</h2>
-                    <button
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h2 className="text-h1">{customer.name}</h2>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
                       onClick={() => setIsEditing(true)}
-                      className="text-blue-400 hover:bg-blue-400/10 transition-colors p-1 rounded-lg"
+                      className="touch-target text-primary-1 hover:bg-blue-50 rounded-lg transition-colors"
                       title="Edit Customer"
                     >
-                      <Edit size={18} />
-                    </button>
+                      <Edit3 size={18} />
+                    </motion.button>
                   </div>
                   {customer.phone && (
-                    <div className="flex items-center text-gray-300 mb-2">
+                    <div className="flex items-center text-text-secondary mb-3">
                       <Phone className="h-4 w-4 mr-2" />
-                      {customer.phone}
+                      <span className="text-body">{customer.phone}</span>
                     </div>
                   )}
-                  <p className="text-gray-300 mb-1">Total Bill</p>
-                  <p className={`text-3xl font-bold ${customer.totalDebt && customer.totalDebt > 0 ? 'text-red-400' : 'text-green-400'}`}>
-                    ₹ {typeof customer.totalDebt === 'number' ? customer.totalDebt.toFixed(2) : '0.00'}
+                </div>
+                
+                <div className="relative">
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowActions(!showActions)}
+                    className="touch-target text-text-secondary hover:bg-gray-50 rounded-lg transition-colors"
+                  >
+                    <MoreVertical size={20} />
+                  </motion.button>
+                  
+                  <AnimatePresence>
+                    {showActions && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                        className="absolute right-0 top-12 bg-surface rounded-card shadow-card border border-gray-100 py-2 min-w-48 z-10"
+                      >
+                        <button
+                          onClick={() => {
+                            handleDeleteAll();
+                            setShowActions(false);
+                          }}
+                          className="w-full px-4 py-2 text-left text-body text-text-primary hover:bg-gray-50 transition-colors"
+                        >
+                          Delete All Transactions
+                        </button>
+                        <button
+                          onClick={() => {
+                            handleDeleteCustomer();
+                            setShowActions(false);
+                          }}
+                          className="w-full px-4 py-2 text-left text-body text-danger hover:bg-red-50 transition-colors"
+                        >
+                          Delete Customer
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* Payment Progress */}
+              <div className="mb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-small text-text-secondary">Payment Progress</span>
+                  <span className="text-small text-text-secondary">{Math.round(paymentProgress)}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${paymentProgress}%` }}
+                    transition={{ duration: 0.8, ease: 'easeOut' }}
+                    className="bg-gradient-to-r from-primary-1 to-primary-2 h-2 rounded-full"
+                  />
+                </div>
+              </div>
+
+              {/* Amount Summary */}
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="text-center">
+                  <p className="text-small text-text-secondary mb-1">Total</p>
+                  <p className="text-h2">₹{totalDebt.toLocaleString()}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-small text-text-secondary mb-1">Paid</p>
+                  <p className="text-h2 text-success">₹{totalPaid.toLocaleString()}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-small text-text-secondary mb-1">Due</p>
+                  <p className={`text-h2 ${remainingDue <= 0 ? 'text-success' : 'text-danger'}`}>
+                    ₹{Math.max(0, remainingDue).toLocaleString()}
                   </p>
                 </div>
-                <button
-                  onClick={handleDeleteCustomer}
-                  className="text-red-400 hover:bg-red-400/10 transition-colors p-2 rounded-xl"
-                  title="Delete Customer"
-                >
-                  <UserX size={24} />
-                </button>
               </div>
-              
-              {/* Action Buttons - Vertical Layout */}
-              <div className="space-y-3 mt-4">
-                <button
+
+              {/* Action Buttons */}
+              <div className="space-y-3">
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => navigate(`/add-transaction/${customerId}`)}
-                  className="w-full bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 py-3 px-4 rounded-xl transition-colors flex items-center justify-center font-medium"
+                  className="w-full btn-primary flex items-center justify-center"
                 >
-                  <PlusCircle size={20} className="mr-3" />
+                  <PlusCircle size={20} className="mr-2" />
                   Add New Transaction
-                </button>
+                </motion.button>
                 
                 <div className="grid grid-cols-3 gap-3">
-                  <button
+                  <motion.button
+                    whileTap={{ scale: 0.98 }}
                     onClick={handlePrint}
-                    className="bg-gray-500/20 hover:bg-gray-500/30 text-gray-400 py-3 px-4 rounded-xl transition-colors flex items-center justify-center font-medium"
+                    className="py-3 px-4 bg-gray-100 text-text-primary rounded-card font-medium hover:bg-gray-200 transition-colors flex items-center justify-center"
                   >
-                    <Printer size={18} className="mr-2" />
+                    <Printer size={16} className="mr-1" />
                     Print
-                  </button>
-                  <button
+                  </motion.button>
+                  <motion.button
+                    whileTap={{ scale: 0.98 }}
                     onClick={handleShare}
-                    className="bg-green-500/20 hover:bg-green-500/30 text-green-400 py-3 px-4 rounded-xl transition-colors flex items-center justify-center font-medium"
+                    className="py-3 px-4 bg-green-100 text-success rounded-card font-medium hover:bg-green-200 transition-colors flex items-center justify-center"
                   >
-                    <Share2 size={18} className="mr-2" />
+                    <Share2 size={16} className="mr-1" />
                     Share
-                  </button>
+                  </motion.button>
                   {customer.phone ? (
-                    <button
+                    <motion.button
+                      whileTap={{ scale: 0.98 }}
                       onClick={handleSendBillToWhatsApp}
-                      className="bg-green-500/20 hover:bg-green-500/30 text-green-400 py-3 px-4 rounded-xl transition-colors flex items-center justify-center font-medium"
+                      className="py-3 px-4 bg-green-100 text-success rounded-card font-medium hover:bg-green-200 transition-colors flex items-center justify-center"
                     >
-                      <MessageCircle size={18} className="mr-2" />
+                      <MessageCircle size={16} className="mr-1" />
                       WhatsApp
-                    </button>
+                    </motion.button>
                   ) : (
                     <button
                       disabled
-                      className="bg-gray-500/10 text-gray-500 py-3 px-4 rounded-xl transition-colors flex items-center justify-center font-medium cursor-not-allowed"
+                      className="py-3 px-4 bg-gray-50 text-text-muted rounded-card font-medium cursor-not-allowed flex items-center justify-center"
                       title="No phone number saved"
                     >
-                      <MessageCircle size={18} className="mr-2" />
+                      <MessageCircle size={16} className="mr-1" />
                       WhatsApp
                     </button>
                   )}
@@ -367,41 +452,51 @@ Thank you 🙏`;
               </div>
             </>
           )}
-        </div>
+        </motion.div>
 
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl overflow-hidden mb-5">
-          <div className="px-4 py-3 border-b border-white/10 flex justify-between items-center">
-            <h2 className="font-semibold flex items-center text-white">
-              <Clock size={18} className="mr-2 text-gray-400" />
+        {/* Transaction History */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1, ease: [0.2, 0.9, 0.3, 1] }}
+          className="premium-card overflow-hidden"
+        >
+          <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+            <h2 className="text-h2 flex items-center">
+              <Clock size={18} className="mr-2 text-text-secondary" />
               Transaction History
             </h2>
-            {transactions.length > 0 && (
-              <button
-                onClick={handleDeleteAll}
-                className="flex items-center text-red-400 hover:text-red-300 transition-colors text-sm"
-              >
-                <Trash2 size={16} className="mr-1" />
-                Delete All
-              </button>
-            )}
+            <span className="text-small text-text-secondary">
+              {transactions.length} transactions
+            </span>
           </div>
 
-          <div className="divide-y divide-white/10 px-4">
+          <div className="divide-y divide-gray-100">
             {transactions.length === 0 ? (
-              <p className="py-6 text-center text-gray-400">No transactions yet</p>
+              <div className="py-8 text-center">
+                <p className="text-body text-text-secondary">No transactions yet</p>
+              </div>
             ) : (
-              transactions.map((transaction) => (
-                <TransactionItem key={transaction.id} transaction={transaction} />
+              transactions.map((transaction, index) => (
+                <motion.div
+                  key={transaction.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                >
+                  <TransactionItem transaction={transaction} />
+                </motion.div>
               ))
             )}
           </div>
-        </div>
+        </motion.div>
       </div>
 
-      <FloatingActionButton
-        onClick={() => navigate(`/add-transaction/${customerId}`)}
-        icon={<PlusCircle size={24} />}
-        label="Add New Transaction"
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.show}
+        onClose={() => setToast({ ...toast, show: false })}
       />
     </div>
   );

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Transaction } from '../types';
 import { ArrowUpCircle, ArrowDownCircle, Trash2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useAppContext } from '../context/AppContext';
 
 interface TransactionItemProps {
@@ -14,7 +15,7 @@ const TransactionItem: React.FC<TransactionItemProps> = ({ transaction }) => {
   const isDebt = transaction.type === 'debt';
 
   const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this transaction?')) {
+    if (window.confirm('Delete this transaction? This cannot be undone.')) {
       await deleteTransaction(
         transaction.id,
         transaction.customer_id,
@@ -25,35 +26,47 @@ const TransactionItem: React.FC<TransactionItemProps> = ({ transaction }) => {
   };
 
   return (
-    <div className="py-3">
-      <div className="flex justify-between items-center mb-1">
-        <div className="flex items-center">
-          {isDebt ? (
-            <ArrowUpCircle size={20} className="text-red-400 mr-2" />
-          ) : (
-            <ArrowDownCircle size={20} className="text-green-400 mr-2" />
-          )}
-          <span className="font-medium text-white">
-            {isDebt ? 'Debt' : 'Payment'} - ₹ {transaction.amount.toFixed(2)}
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <div className="text-sm text-gray-400">{date}</div>
-            <div className="text-xs text-gray-500">{time}</div>
+    <div className="px-6 py-4 hover:bg-gray-50 transition-colors">
+      <div className="flex justify-between items-start">
+        <div className="flex items-start flex-1">
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-4 ${
+            isDebt ? 'bg-red-50' : 'bg-green-50'
+          }`}>
+            {isDebt ? (
+              <ArrowUpCircle size={20} className="text-danger" />
+            ) : (
+              <ArrowDownCircle size={20} className="text-success" />
+            )}
           </div>
-          <button
-            onClick={handleDelete}
-            className="p-1 text-gray-400 hover:text-red-400 transition-colors"
-            aria-label="Delete transaction"
-          >
-            <Trash2 size={18} />
-          </button>
+          
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-body font-medium">
+                {isDebt ? 'Debt' : 'Payment'} - ₹{transaction.amount.toLocaleString()}
+              </span>
+              <div className="flex items-center space-x-3">
+                <div className="text-right">
+                  <div className="text-small text-text-secondary">{date}</div>
+                  <div className="text-small text-text-muted">{time}</div>
+                </div>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleDelete}
+                  className="touch-target text-text-muted hover:text-danger transition-colors rounded-lg"
+                  aria-label="Delete transaction"
+                >
+                  <Trash2 size={16} />
+                </motion.button>
+              </div>
+            </div>
+            {transaction.items && (
+              <p className="text-small text-text-secondary truncate">
+                {transaction.items}
+              </p>
+            )}
+          </div>
         </div>
       </div>
-      {transaction.items && (
-        <p className="text-sm text-gray-400 ml-7">{transaction.items}</p>
-      )}
     </div>
   );
 };
