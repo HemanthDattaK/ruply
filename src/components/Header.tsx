@@ -12,30 +12,30 @@ const Header: React.FC<HeaderProps> = ({ title, showBack = false }) => {
   const navigate = useNavigate();
 
   return (
-    <motion.header 
-      initial={{ opacity: 0, y: -20 }}
+    <motion.header
+      initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white/10 backdrop-blur-lg border-b border-white/10"
+      className="bg-white border-b border-gray-200 sticky top-0 z-50"
     >
-      <div className="flex items-center justify-between px-4 py-4">
+      <div className="flex items-center justify-between px-4 py-4 max-w-md mx-auto">
         <div className="flex items-center">
           {showBack ? (
-            <motion.button 
+            <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate(-1)}
-              className="mr-4 p-2 rounded-xl hover:bg-white/10 transition-colors"
+              className="mr-4 p-2 rounded-xl hover:bg-gray-100 transition-colors"
               aria-label="Go back"
             >
-              <ArrowLeft size={24} className="text-white" />
+              <ArrowLeft size={24} className="text-gray-700" />
             </motion.button>
           ) : (
             <div className="mr-3">
-              <h1 className="text-lg font-bold text-white">KV Satyanarayana</h1>
+              <h1 className="text-lg font-bold text-gray-900">KV Satyanarayana</h1>
             </div>
           )}
           {showBack && (
             <div>
-              <h1 className="text-xl font-bold text-white">{title}</h1>
+              <h1 className="text-xl font-bold text-gray-900">{title}</h1>
             </div>
           )}
         </div>

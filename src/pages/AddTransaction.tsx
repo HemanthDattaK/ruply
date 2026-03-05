@@ -57,29 +57,29 @@ const handleSubmit = async (e: React.FormEvent) => {
   const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0F172A] to-[#1E293B] text-white">
+    <div className="min-h-screen bg-gray-50">
       <Header title="Add New Transaction" showBack={true} />
 
-      <div className="max-w-md mx-auto px-4 py-8">
+      <div className="max-w-md mx-auto px-4 py-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/10"
+          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
         >
           {customers.length === 0 ? (
             <div className="text-center py-8">
-              <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                <CreditCard className="w-8 h-8 text-gray-400" />
+              <div className="p-4 bg-gray-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <CreditCard className="w-8 h-8 text-gray-500" />
               </div>
-              <h3 className="text-lg font-semibold text-text-primary-light dark:text-text-primary-dark mb-2">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 No Customers Found
               </h3>
-              <p className="text-text-secondary-light dark:text-text-secondary-dark mb-6">
+              <p className="text-gray-600 mb-6">
                 You need to add a customer first before creating transactions.
               </p>
               <Button
-                variant="primary"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
                 onClick={() => navigate('/add-customer')}
               >
                 Add Customer
@@ -88,10 +88,10 @@ const handleSubmit = async (e: React.FormEvent) => {
           ) : (
             <>
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-white mb-2">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
                   Record Transaction
                 </h2>
-                <p className="text-gray-300">
+                <p className="text-gray-600">
                   {selectedCustomer ? `Adding transaction for ${selectedCustomer.name}` : 'Add a new debt or payment transaction.'}
                 </p>
               </div>
@@ -99,19 +99,19 @@ const handleSubmit = async (e: React.FormEvent) => {
               <form onSubmit={handleSubmit}>
                 {!customerId && (
                   <div className="mb-6">
-                    <label htmlFor="customer" className="block text-sm font-medium text-white mb-2">
-                      Customer <span className="text-red-400">*</span>
+                    <label htmlFor="customer" className="block text-sm font-medium text-gray-900 mb-2">
+                      Customer <span className="text-red-500">*</span>
                     </label>
                     <select
                       id="customer"
                       value={selectedCustomerId}
                       onChange={(e) => setSelectedCustomerId(e.target.value)}
-                      className="w-full px-4 py-3 bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors [&>option]:bg-gray-800 [&>option]:text-white"
+                      className="w-full px-4 py-4 bg-white border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                       required
                     >
-                      <option value="" className="bg-gray-800 text-white">Select Customer</option>
+                      <option value="">Select Customer</option>
                       {customers.map((customer) => (
-                        <option key={customer.id} value={customer.id} className="bg-gray-800 text-white">
+                        <option key={customer.id} value={customer.id}>
                           {customer.name}
                         </option>
                       ))}
@@ -120,31 +120,31 @@ const handleSubmit = async (e: React.FormEvent) => {
                 )}
 
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-white mb-3">
-                    Transaction Type <span className="text-red-400">*</span>
+                  <label className="block text-sm font-medium text-gray-900 mb-3">
+                    Transaction Type <span className="text-red-500">*</span>
                   </label>
                   <div className="grid grid-cols-2 gap-3">
                     <motion.button
                       type="button"
                       whileTap={{ scale: 0.98 }}
-                      className={`p-4 rounded-lg border-2 transition-all ${
+                      className={`p-4 rounded-xl border-2 transition-all ${
                         transactionType === 'debt'
-                          ? 'border-red-400 bg-red-500/10'
-                          : 'border-white/20 hover:border-white/30'
+                          ? 'border-red-300 bg-red-50'
+                          : 'border-gray-200 hover:border-gray-300 bg-white'
                       }`}
                       onClick={() => setTransactionType('debt')}
                     >
                       <TrendingUp className={`w-6 h-6 mx-auto mb-2 ${
-                        transactionType === 'debt' ? 'text-red-400' : 'text-gray-400'
+                        transactionType === 'debt' ? 'text-red-600' : 'text-gray-500'
                       }`} />
                       <div className={`font-medium ${
                         transactionType === 'debt' 
-                          ? 'text-red-400' 
-                          : 'text-white'
+                          ? 'text-red-600' 
+                          : 'text-gray-900'
                       }`}>
                         Debt
                       </div>
-                      <div className="text-xs text-gray-400 mt-1">
+                      <div className="text-xs text-gray-500 mt-1">
                         Money owed
                       </div>
                     </motion.button>
@@ -152,24 +152,24 @@ const handleSubmit = async (e: React.FormEvent) => {
                     <motion.button
                       type="button"
                       whileTap={{ scale: 0.98 }}
-                      className={`p-4 rounded-lg border-2 transition-all ${
+                      className={`p-4 rounded-xl border-2 transition-all ${
                         transactionType === 'payment'
-                          ? 'border-green-400 bg-green-500/10'
-                          : 'border-white/20 hover:border-white/30'
+                          ? 'border-green-300 bg-green-50'
+                          : 'border-gray-200 hover:border-gray-300 bg-white'
                       }`}
                       onClick={() => setTransactionType('payment')}
                     >
                       <TrendingDown className={`w-6 h-6 mx-auto mb-2 ${
-                        transactionType === 'payment' ? 'text-green-400' : 'text-gray-400'
+                        transactionType === 'payment' ? 'text-green-600' : 'text-gray-500'
                       }`} />
                       <div className={`font-medium ${
                         transactionType === 'payment' 
-                          ? 'text-green-400' 
-                          : 'text-white'
+                          ? 'text-green-600' 
+                          : 'text-gray-900'
                       }`}>
                         Payment
                       </div>
-                      <div className="text-xs text-gray-400 mt-1">
+                      <div className="text-xs text-gray-500 mt-1">
                         Money received
                       </div>
                     </motion.button>
@@ -200,14 +200,15 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <div className="flex space-x-4">
                   <Button
                     type="button"
-                    className="flex-1 border border-white/20 text-white hover:bg-white/10"
+                    variant="secondary"
+                    className="flex-1"
                     onClick={() => navigate(-1)}
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
-                    className="flex-1 bg-blue-500 hover:bg-blue-600 text-white"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                     loading={loading}
                     disabled={!selectedCustomerId || !amount}
                   >

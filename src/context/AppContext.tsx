@@ -29,56 +29,48 @@ export const useAppContext = () => {
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    setLoading(true);
     fetchData();
-
-    // Subscribe to auth changes to refresh data when auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      fetchData();
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, []);
 
   const fetchData = async () => {
     try {
-      // First check if we're authenticated
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        // If not authenticated, sign in anonymously
-        await supabase.auth.signInAnonymously();
-      }
-
       const { data: customersData, error: customersError } = await supabase
         .from('customers')
         .select('*');
 
-      if (customersError) throw customersError;
+      if (customersError) {
+        console.error('Error fetching customers:', customersError);
+        setCustomers([]);
+      } else {
+        // Map the snake_case properties to camelCase
+        const mappedCustomers = (customersData || []).map(customer => ({
+          id: customer.id,
+          name: customer.name,
+          phone: customer.phone,
+          totalDebt: customer.total_debt || 0,
+          createdAt: customer.created_at
+        }));
+        setCustomers(mappedCustomers);
+      }
 
       const { data: transactionsData, error: transactionsError } = await supabase
         .from('transactions')
         .select('*');
 
-      if (transactionsError) throw transactionsError;
-
-      // Map the snake_case properties to camelCase
-      const mappedCustomers = customersData.map(customer => ({
-        id: customer.id,
-        name: customer.name,
-        phone: customer.phone,
-        totalDebt: customer.total_debt,
-        createdAt: customer.created_at
-      }));
-
-      setCustomers(mappedCustomers);
-      setTransactions(transactionsData);
+      if (transactionsError) {
+        console.error('Error fetching transactions:', transactionsError);
+        setTransactions([]);
+      } else {
+        setTransactions(transactionsData || []);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
+      setCustomers([]);
+      setTransactions([]);
     } finally {
       setLoading(false);
     }
@@ -86,13 +78,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addCustomer = async (name: string, phone?: string) => {
     try {
-      // Ensure we're authenticated before adding
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        await supabase.auth.signInAnonymously();
-      }
-
       const { data, error } = await supabase
         .from('customers')
         .insert([{ name, phone, total_debt: 0 }])

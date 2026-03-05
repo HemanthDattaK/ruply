@@ -29,21 +29,21 @@ const AddCustomer: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0F172A] to-[#1E293B] text-white">
+    <div className="min-h-screen bg-gray-50">
       <Header title="Add New Customer" showBack={true} />
 
-      <div className="max-w-md mx-auto px-4 py-8">
+      <div className="max-w-md mx-auto px-4 py-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/10"
+          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
         >
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-white mb-2">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
               Create Customer Profile
             </h2>
-            <p className="text-gray-300">
+            <p className="text-gray-600">
               Add a new customer to start tracking their debt and payments.
             </p>
           </div>
@@ -70,14 +70,15 @@ const AddCustomer: React.FC = () => {
             <div className="flex space-x-4">
               <Button
                 type="button"
-                className="flex-1 border border-white/20 text-white hover:bg-white/10"
+                variant="secondary"
+                className="flex-1"
                 onClick={() => navigate(-1)}
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                 loading={loading}
                 disabled={!customerName.trim()}
               >

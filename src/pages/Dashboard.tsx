@@ -1,194 +1,184 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Users, IndianRupee, Search, Mic } from 'lucide-react';
+import { Plus, Users, IndianRupee, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { motion, AnimatePresence } from 'framer-motion';
 import CustomerCard from '../components/CustomerCard';
 import Button from '../components/ui/Button';
 import FloatingActionButton from '../components/FloatingActionButton';
 import Header from '../components/Header';
-import VoiceTransactionModal from '../components/VoiceTransactionModal';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { useAppContext } from '../context/AppContext';
 
 interface Customer {
   id: string;
   name: string;
   phone?: string;
-  total_debt: number;
+  totalDebt: number;
 }
 
 export default function Dashboard() {
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const { customers, loading, getCustomerTransactions } = useAppContext();
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [totalOutstanding, setTotalOutstanding] = useState(0);
   const [activeCustomers, setActiveCustomers] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
 
   useEffect(() => {
     const filtered = customers.filter(customer =>
       customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (customer.phone && customer.phone.includes(searchQuery))
     );
-    // Sort by total_debt in descending order (highest debt first)
-    const sorted = filtered.sort((a, b) => b.total_debt - a.total_debt);
+    
+    // Sort by total debt in descending order (highest debt first)
+    const sorted = filtered.sort((a, b) => Math.abs(b.totalDebt) - Math.abs(a.totalDebt));
     setFilteredCustomers(sorted);
+    
+    // Calculate totals
+    const total = customers.reduce((sum, customer) => sum + Math.abs(customer.totalDebt), 0);
+    const active = customers.filter(customer => customer.totalDebt !== 0).length;
+    
+    setTotalOutstanding(total);
+    setActiveCustomers(active);
   }, [customers, searchQuery]);
 
-  const fetchCustomers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('customers')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      setCustomers(data || []);
-      setFilteredCustomers(data || []);
-      
-      // Calculate totals
-      const total = (data || []).reduce((sum, customer) => sum + customer.total_debt, 0);
-      const active = (data || []).filter(customer => customer.total_debt > 0).length;
-      
-      setTotalOutstanding(total);
-      setActiveCustomers(active);
-    } catch (error) {
-      console.error('Error fetching customers:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0F172A] to-[#1E293B] text-white">
+    <div className="min-h-screen bg-gray-50">
       <Header title="Dashboard" />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="px-4 py-6 space-y-6">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/10">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <IndianRupee className="h-8 w-8 text-red-400" />
+        <div className="grid grid-cols-2 gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center">
+                <IndianRupee className="h-5 w-5 text-red-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-300">Total Outstanding</p>
-                <p className="text-2xl font-bold text-white">
+              <div>
+                <p className="text-xs text-gray-500 font-medium">Total Outstanding</p>
+                <p className="text-lg font-bold text-gray-900">
                   ₹{totalOutstanding.toLocaleString()}
                 </p>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/10">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Users className="h-8 w-8 text-blue-400" />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+            className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                <Users className="h-5 w-5 text-blue-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-300">Active Customers</p>
-                <p className="text-2xl font-bold text-white">{activeCustomers}</p>
+              <div>
+                <p className="text-xs text-gray-500 font-medium">Active Customers</p>
+                <p className="text-lg font-bold text-gray-900">{activeCustomers}</p>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-8 border border-white/10">
-          <h2 className="text-lg font-semibold text-white mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
+        >
+          <h2 className="text-sm font-semibold text-gray-900 mb-3">Quick Actions</h2>
+          <div className="grid grid-cols-2 gap-3">
             <Link to="/add-customer">
-              <Button className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white">
+              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm py-3">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Customer
               </Button>
             </Link>
             <Link to="/add-transaction">
-              <Button variant="secondary" className="w-full sm:w-auto border-blue-400 text-blue-400 hover:bg-blue-400/10">
+              <Button variant="secondary" className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 text-sm py-3">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Transaction
               </Button>
             </Link>
-            <Button 
-              onClick={() => setIsVoiceModalOpen(true)}
-              variant="primary"
-              className="w-full sm:w-auto bg-purple-500 hover:bg-purple-600 text-white border-0"
-            >
-              <Mic className="h-4 w-4 mr-2" />
-              Add with Voice
-            </Button>
           </div>
-        </div>
+        </motion.div>
 
         {/* Search Bar */}
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <input
-              type="text"
-              placeholder="Search customers by name or phone..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
+          className="relative"
+        >
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+          <input
+            type="text"
+            placeholder="Search customers..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+          />
+        </motion.div>
 
         {/* Customers List */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/10">
-          <div className="px-6 py-4 border-b border-white/10">
-            <h2 className="text-lg font-semibold text-white">All Customers</h2>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.4 }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">All Customers</h2>
+            <span className="text-sm text-gray-500">{filteredCustomers.length} customers</span>
           </div>
-          <div className="p-6">
-            {filteredCustomers.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-400 mb-4">
-                  {searchQuery ? 'No customers found matching your search' : 'No customers yet'}
-                </p>
-                <Link to="/add-customer">
-                  <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-                    Add Your First Customer
-                  </Button>
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredCustomers.map((customer) => (
-                  <CustomerCard key={customer.id} customer={customer} />
+          
+          {filteredCustomers.length === 0 ? (
+            <div className="bg-white rounded-2xl p-8 text-center shadow-sm border border-gray-100">
+              <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 mb-4">
+                {searchQuery ? 'No customers found matching your search' : 'No customers yet'}
+              </p>
+              <Link to="/add-customer">
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                  Add Your First Customer
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <AnimatePresence>
+              <div className="space-y-3">
+                {filteredCustomers.map((customer, index) => (
+                  <motion.div
+                    key={customer.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                  >
+                    <CustomerCard customer={customer} />
+                  </motion.div>
                 ))}
               </div>
-            )}
-          </div>
-        </div>
+            </AnimatePresence>
+          )}
+        </motion.div>
       </div>
 
       <FloatingActionButton
         onClick={() => navigate('/add-transaction')}
         icon={<Plus size={24} />}
         label="Add Transaction"
-      />
-
-      <VoiceTransactionModal 
-        isOpen={isVoiceModalOpen}
-        onClose={() => setIsVoiceModalOpen(false)}
       />
     </div>
   );
